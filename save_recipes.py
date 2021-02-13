@@ -25,6 +25,8 @@ def agg_data():
     all_dfs_nutrient = all_dfs_nutrient.drop(columns = ['nutrients'])
     # make unique index for each recipe
     all_dfs_nutrient = all_dfs_nutrient.reset_index().drop(columns = 'index')
+    all_dfs_nutrient = all_dfs_nutrient.drop_duplicates()
+    print(f"number of recipes {len(all_dfs_nutrient)}")
     
     return all_dfs_nutrient
 
