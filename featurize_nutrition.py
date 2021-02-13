@@ -25,4 +25,5 @@ def featurize_nutrients(all_dfs_nutrient):
     df['high_sodium'] = np.where(df['sodiumContent'] > 1000, 1, 0)
     df['high_sugar'] = np.where(df['sugarContent'] > 9, 1, 0)
     
+    # drop the original columns
     return df.drop(columns = nutrient_cols)
