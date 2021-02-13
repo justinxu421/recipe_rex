@@ -5,6 +5,7 @@ Combine the data csv's and explode out the nutrients column
 import pandas as pd
 import pathlib
 import yaml
+import ast
 
 def agg_data():
     # find all 'csv' files in the data folder
@@ -23,10 +24,14 @@ def agg_data():
     nutrient_df = pd.DataFrame(all_dfs['nutrients'].values.tolist(), index = all_dfs.index)
     all_dfs_nutrient = pd.concat([all_dfs, nutrient_df], axis = 1)
     all_dfs_nutrient = all_dfs_nutrient.drop(columns = ['nutrients'])
+    
     # make unique index for each recipe
     all_dfs_nutrient = all_dfs_nutrient.reset_index().drop(columns = 'index')
     all_dfs_nutrient = all_dfs_nutrient.drop_duplicates()
     print(f"number of recipes {len(all_dfs_nutrient)}")
+    
+    # convert stringified ingredients array to List
+    all_dfs_nutrient["ingredients"] = all_dfs_nutrient["ingredients"].apply(lambda ingr: ast.literal_eval(ingr))
     
     return all_dfs_nutrient
 
