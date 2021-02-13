@@ -10,6 +10,7 @@ def agg_data():
     # find all 'csv' files in the data folder
     datasets = pathlib.Path("data").rglob("*.csv")
     datasets = [d.as_posix() for d in datasets]
+    datasets = [d for d in datasets if 'all' not in d]
     print(f"{len(datasets)} datasets found")
     
     # concatenate 
