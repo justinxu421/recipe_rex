@@ -21,7 +21,7 @@ def agg_data():
     all_dfs['nutrients'] = all_dfs['nutrients'].apply(lambda x: yaml.load(x))
     nutrient_df = pd.DataFrame(all_dfs['nutrients'].values.tolist(), index = all_dfs.index)
     all_dfs_nutrient = pd.concat([all_dfs, nutrient_df], axis = 1)
-    all_dfs_nutrient.drop(columns = ['nutrients'])
+    all_dfs_nutrient = all_dfs_nutrient.drop(columns = ['nutrients'])
     
     return all_dfs_nutrient
 
@@ -31,4 +31,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
