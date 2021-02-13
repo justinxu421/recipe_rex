@@ -32,7 +32,7 @@ def agg_data():
 
 def main():
     all_dfs_nutrient = agg_data()
-    all_dfs_nutrient.to_csv('data/all_recipes_nutrient.csv')
+    all_dfs_nutrient.to_csv('clean_data/all_recipes_nutrient.csv')
 
 if __name__ == "__main__":
     main()
