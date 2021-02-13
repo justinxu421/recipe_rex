@@ -23,6 +23,8 @@ def agg_data():
     nutrient_df = pd.DataFrame(all_dfs['nutrients'].values.tolist(), index = all_dfs.index)
     all_dfs_nutrient = pd.concat([all_dfs, nutrient_df], axis = 1)
     all_dfs_nutrient = all_dfs_nutrient.drop(columns = ['nutrients'])
+    # make unique index for each recipe
+    all_dfs_nutrient = all_dfs_nutrient.reset_index().drop(columns = 'index')
     
     return all_dfs_nutrient
 
