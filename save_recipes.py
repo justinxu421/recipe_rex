@@ -26,14 +26,14 @@ def agg_data():
     all_dfs_nutrient = all_dfs_nutrient.drop(columns = ['nutrients'])
     
     # make unique index for each recipe
-    all_dfs_nutrient = all_dfs_nutrient.reset_index().drop(columns = 'index')
     all_dfs_nutrient = all_dfs_nutrient.drop_duplicates()
+    all_dfs_nutrient = all_dfs_nutrient.reset_index().drop(columns = 'index')
     print(f"number of recipes {len(all_dfs_nutrient)}")
     
     # convert stringified ingredients array to List
     all_dfs_nutrient["ingredients"] = all_dfs_nutrient["ingredients"].apply(lambda ingr: ast.literal_eval(ingr))
     
-    return all_dfs_nutrient
+    return all_dfs_nutrient.reset_index()
 
 def main():
     all_dfs_nutrient = agg_data()
