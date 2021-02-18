@@ -54,8 +54,8 @@ def choose_top_grams(dataset: pd.DataFrame, min_unigram_ct = 20, min_bigram_ct =
     top_unigram_cts = {gram : ct for gram, ct in unigram_cts.items() if ct >= min_unigram_ct}
     top_bigram_cts = {gram : ct for gram, ct in bigram_cts.items() if ct >= min_bigram_ct}
 
-    print(f"{Using len(top_unigram_cts)} unigrams that occur over {min_unigram_ct} times")
-    print(f"{Using len(top_bigram_cts)} bigrams that occur over {min_bigram_ct} times")
+    print(f"Using {len(top_unigram_cts)} unigrams that occur over {min_unigram_ct} times")
+    print(f"Using {len(top_bigram_cts)} bigrams that occur over {min_bigram_ct} times")
     
     # Create one hot encoding index for each gram
     top_grams = list(top_unigram_cts.keys()) + list(top_bigram_cts.keys())

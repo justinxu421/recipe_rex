@@ -7,6 +7,9 @@ import pathlib
 import yaml
 import ast
 
+from featurize_ingredients import choose_top_grams, featurize_ingredients
+
+
 def agg_data():
     # find all 'csv' files in the data folder
     datasets = pathlib.Path("data").rglob("*.csv")
@@ -33,10 +36,17 @@ def agg_data():
     # convert stringified ingredients array to List
     all_dfs_nutrient["ingredients"] = all_dfs_nutrient["ingredients"].apply(lambda ingr: ast.literal_eval(ingr))
     
+    # get ingredients encoder (gram -> one hot encoding idx)
+    _, _, gram2idx = choose_top_grams(all_dfs_nutrient) 
+
+    # encode ingredients
+    all_dfs_nutrient = featurize_ingredients(all_dfs_nutrient, gram2idx)
+
     return all_dfs_nutrient.reset_index()
 
 def main():
     all_dfs_nutrient = agg_data()
+        
     all_dfs_nutrient.to_csv('clean_data/all_recipes_nutrient.csv', index = False)
 
 if __name__ == "__main__":
