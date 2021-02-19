@@ -23,7 +23,7 @@ def agg_data():
         dfs.append(pd.read_csv(dataset))
     all_dfs = pd.concat(dfs)
     
-    all_dfs['nutrients'] = all_dfs['nutrients'].apply(lambda x: yaml.load(x))
+    all_dfs['nutrients'] = all_dfs['nutrients'].apply(lambda x: yaml.safe_load(x))
     nutrient_df = pd.DataFrame(all_dfs['nutrients'].values.tolist(), index = all_dfs.index)
     all_dfs_nutrient = pd.concat([all_dfs, nutrient_df], axis = 1)
     all_dfs_nutrient = all_dfs_nutrient.drop(columns = ['nutrients'])

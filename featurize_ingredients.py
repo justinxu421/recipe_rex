@@ -1,8 +1,8 @@
 import pandas as pd
 import numpy as np
 from collections import defaultdict
-import re
 import ast
+import re
 
 # Get the most popular ingredients
 def is_digit(word):
@@ -92,12 +92,12 @@ def featurize_ingredients(dataset: pd.DataFrame, save = False):
 
     # Encode unigram/bigram ingredient vectors for each recipe
     ing_features = np.array([
-        one_hot_encode_raw_ingrs(ingrs, gram2idx) 
-        for ingrs in dataset["ingredients"]
-    ])
-    
+            one_hot_encode_raw_ingrs(ingrs, gram2idx)
+            for ingrs in dataset["ingredients"]
+        ])
+
     ing_df = pd.DataFrame(ing_features, index = dataset['url'])
     if save:
         ing_df.to_csv('clean_data/ing_features.csv')
-        
+
     return ing_df
