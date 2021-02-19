@@ -23,7 +23,7 @@ def agg_data():
         dfs.append(pd.read_csv(dataset))
     all_dfs = pd.concat(dfs)
     
-    all_dfs['nutrients'] = all_dfs['nutrients'].apply(lambda x: yaml.load(x))
+    all_dfs['nutrients'] = all_dfs['nutrients'].apply(lambda x: yaml.safe_load(x))
     nutrient_df = pd.DataFrame(all_dfs['nutrients'].values.tolist(), index = all_dfs.index)
     all_dfs_nutrient = pd.concat([all_dfs, nutrient_df], axis = 1)
     all_dfs_nutrient = all_dfs_nutrient.drop(columns = ['nutrients'])
@@ -37,10 +37,10 @@ def agg_data():
     all_dfs_nutrient["ingredients"] = all_dfs_nutrient["ingredients"].apply(lambda ingr: ast.literal_eval(ingr))
     
     # get ingredients encoder (gram -> one hot encoding idx)
-    _, _, gram2idx = choose_top_grams(all_dfs_nutrient) 
+    gram_probs, gram2vec = choose_top_grams(all_dfs_nutrient) 
 
     # encode ingredients
-    all_dfs_nutrient = featurize_ingredients(all_dfs_nutrient, gram2idx)
+    all_dfs_nutrient = featurize_ingredients(all_dfs_nutrient, gram2vec, gram_probs)
 
     return all_dfs_nutrient.reset_index()
 
