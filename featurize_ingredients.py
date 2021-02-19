@@ -2,6 +2,7 @@ import pandas as pd
 import numpy as np
 from collections import defaultdict
 import re
+import ast
 
 # Get the most popular ingredients
 def is_digit(word):
@@ -38,7 +39,11 @@ def get_bigrams(unigrams: list):
 def choose_top_grams(dataset: pd.DataFrame, min_unigram_ct = 20, min_bigram_ct = 20):
     # Collect all possible uni/bigrams
     unigram_cts, bigram_cts = defaultdict(lambda: 0), defaultdict(lambda: 0)
-
+    
+    # if string embedding, convert to list
+    if type(dataset['ingredients'][0]) == str:
+        dataset['ingredients'] = dataset['ingredients'].apply(ast.literal_eval)
+        
     for ingr_list in dataset["ingredients"]:
         for ingr in ingr_list:
             unigrams = get_unigrams(ingr)
@@ -82,12 +87,17 @@ def one_hot_encode_raw_ingrs(ingrs, gram2idx):
     
     return label
 
-def featurize_ingredients(dataset: pd.DataFrame, gram2idx: dict):
+def featurize_ingredients(dataset: pd.DataFrame, save = False):
+    _, _, gram2idx = choose_top_grams(dataset) 
+
     # Encode unigram/bigram ingredient vectors for each recipe
-    dataset["ingredients_encoding"] = [
+    ing_features = np.array([
         one_hot_encode_raw_ingrs(ingrs, gram2idx) 
         for ingrs in dataset["ingredients"]
-    ]
+    ])
     
-    return dataset
-
+    ing_df = pd.DataFrame(ing_features, index = dataset['url'])
+    if save:
+        ing_df.to_csv('clean_data/ing_features.csv')
+        
+    return ing_df

@@ -35,12 +35,6 @@ def agg_data():
     
     # convert stringified ingredients array to List
     all_dfs_nutrient["ingredients"] = all_dfs_nutrient["ingredients"].apply(lambda ingr: ast.literal_eval(ingr))
-    
-    # get ingredients encoder (gram -> one hot encoding idx)
-    _, _, gram2idx = choose_top_grams(all_dfs_nutrient) 
-
-    # encode ingredients
-    all_dfs_nutrient = featurize_ingredients(all_dfs_nutrient, gram2idx)
 
     return all_dfs_nutrient.reset_index()
 
