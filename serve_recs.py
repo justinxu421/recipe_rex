@@ -12,9 +12,11 @@ class KNNRecSys():
 
     # randomly sample some urls and image paths
     def sample_urls(self, samples = 4):
-        urls =  self.embeddings_df_scaled.sample(samples).index
+        urls = self.embeddings_df_scaled.sample(samples).index
+        titles = self.url_index_mapping.loc[urls]['title'].values
         image_paths = self.get_image_paths(urls)
-        return urls, image_paths
+        
+        return urls, titles, image_paths
     
     # plot 10 images given image paths
     def plot_images(self, image_paths):
