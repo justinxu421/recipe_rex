@@ -98,6 +98,7 @@ def featurize_ingredients(dataset: pd.DataFrame, save = False):
 
     ing_df = pd.DataFrame(ing_features, index = dataset['url'])
     if save:
+        print('saving to clean_data/ing_features.csv\n')
         ing_df.to_csv('clean_data/ing_features.csv')
 
     return ing_df

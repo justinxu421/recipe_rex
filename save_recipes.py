@@ -40,7 +40,11 @@ def agg_data():
 
 def main():
     all_dfs_nutrient = agg_data()
-        
+    url_index_mapping = all_dfs_nutrient[['url', 'index']]
+    
+    print('saving to clean_data/url_index_mapping.csv\n')
+    url_index_mapping.to_csv('clean_data/url_index_mapping.csv', index = False)
+    print('saving to clean_data/all_recipes_nutrient.csv')
     all_dfs_nutrient.to_csv('clean_data/all_recipes_nutrient.csv', index = False)
 
 if __name__ == "__main__":

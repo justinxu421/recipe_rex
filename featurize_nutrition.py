@@ -36,6 +36,7 @@ def featurize_nutrients(all_dfs_nutrient, save = False):
     df = df.drop(columns = nutrient_cols)
     
     if save:
+        print('saving to clean_data/nutrient_features.csv\n')
         df.to_csv('clean_data/nutrient_features.csv', index = True)
     
     return df
