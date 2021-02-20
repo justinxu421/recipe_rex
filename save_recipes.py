@@ -40,7 +40,7 @@ def agg_data():
 
 def main():
     all_dfs_nutrient = agg_data()
-    url_index_mapping = all_dfs_nutrient[['url', 'index']]
+    url_index_mapping = all_dfs_nutrient[['url', 'title', 'index']]
     
     print('saving to clean_data/url_index_mapping.csv\n')
     url_index_mapping.to_csv('clean_data/url_index_mapping.csv', index = False)
