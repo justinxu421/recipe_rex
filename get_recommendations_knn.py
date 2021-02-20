@@ -1,19 +1,6 @@
 import pandas as pd
 import numpy as np
 from sklearn.neighbors import NearestNeighbors
-from sklearn.preprocessing import StandardScaler
-
-# read from csv 
-# drop nas
-# scale to standard
-def process_embeddings(file):
-    df = pd.read_csv(f'clean_data/{file}', index_col = 'url')    
-    df = df.dropna()
-    
-    scaler = StandardScaler()
-    scaled = scaler.fit_transform(df)
-    df_scaled = pd.DataFrame(scaled, index = df.index)
-    return df_scaled
     
 # get neighbors based on euclidean distance
 def fit_knn(df):    
