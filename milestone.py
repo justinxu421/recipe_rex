@@ -14,56 +14,33 @@ import random
 def get_images(idx):
     rec_sys = KNNRecSys()
     return rec_sys.sample_urls(4)
-        
+       
+def reset_choice(state):
+    state.url_selections[state.index] = -1
+    state.title_selections[state.index] = -1
+    state.image_selections[state.index] = -1
+
 def display_choice(state):
     params = state.all_params[state.index]
     st.subheader(f'Page {state.index+1}: Which do you prefer?')
-
-    # st.subheader("Which do you prefer?")
 
     urls = params[0]
     titles = params[1]
     pics = params[2]
     
-    col0, col1, col2, col3 = st.beta_columns(4)
-    
     picked = -1
-
-    # selection = st.selectbox('', (titles[0], titles[1], titles[2], titles[3]))
-    with col0:
-        st.image([pics[0]], use_column_width=True)
-        # st.write("{}".format(titles[0].capitalize()))
-        if st.button("{}".format(titles[0].capitalize())):
-            picked = 0
-
-    with col1:
-        st.image(pics[1], use_column_width=True)
-        # st.write("{}".format(titles[1].capitalize()))
-        if st.button("{}".format(titles[1].capitalize())):
-            picked = 1
-  
-    with col2:
-        st.image(pics[2], use_column_width=True)
-        # st.write("{}".format(titles[2].capitalize()))
-        if st.button("{}".format(titles[2].capitalize())):
-            picked = 2
-   
-    with col3:
-        st.image(pics[3], use_column_width=True)
-        # st.write("{}".format(titles[3].capitalize()))
-        if st.button("{}".format(titles[3].capitalize())):
-            picked = 3
+    cols = st.beta_columns(4)
+    for i in range(4):
+        with cols[i]:
+            st.image([pics[i]], use_column_width=True)
+            if st.button("{}".format(titles[i].capitalize())):
+                picked = i
     
-    # st.subheader("Which do you prefer?")
-    # selection = st.selectbox('', (titles[0], titles[1], titles[2], titles[3]))
-    # picked = np.where(titles == selection)[0][0]
-
     # increment and update selections
-    if picked >= 0:# and state.index < state.num_pages:
-        # state.index = state.index + 1
-        st.subheader(f"You picked: {titles[picked].capitalize()}")
+    if picked >= 0 and state.index < state.num_pages:
+        st.write(f"You picked: {titles[picked].capitalize()}")
         state.url_selections[state.index] = urls[picked]
-        state.title_selections[state.index] = titles[picked]
+        state.title_selections[state.index] = titles[picked].capitalize()
         state.image_selections[state.index] = pics[picked]
 
 def display_results(state):
@@ -90,6 +67,14 @@ def display_results(state):
             st.image([state.image_selections[i]], use_column_width=True)
             st.write(f"[{state.title_selections[i]}]({state.url_selections[i]})")
 
+def display(state, message):
+    if state.index == state.num_pages:
+        display_results(state)
+    else:
+        display_choice(state)
+    st.write(message)
+    # st.write(state.title_selections)
+
 def main():
     num_pages = 5
     state = SessionState.get(rec_sys = KNNRecSys(),
@@ -100,21 +85,26 @@ def main():
                              image_selections = [-1 for _ in range(num_pages)],
                              num_pages = num_pages 
                             )
-        
-    b, f = st.beta_columns(2)
+    
+    message = ""
+
+    b, r, f = st.beta_columns(3)
     with b:
         if st.button('Back') and state.index > 0:
             state.index = state.index - 1
-            
+    with r:
+        if st.button('Refresh'):
+            state.all_params[state.index] = get_images(state.index)
+            reset_choice(state)
     with f:
         if st.button('Forward') and state.index < num_pages:
-            state.index = state.index + 1
-            
+            if state.title_selections[state.index] != -1:
+                state.index = state.index + 1
+            else:
+                message = "Please make a selection"
+
     my_bar = st.progress(state.index / state.num_pages)
-    
-    if state.index == state.num_pages:
-        display_results(state)
-    else:
-        display_choice(state)
+    display(state, message)
+
     
 main()
