@@ -2,6 +2,7 @@
 # coding: utf-8
 from serve_recs import KNNRecSys
 import SessionState
+import socket
 
 import streamlit as st
 # To make things easier later, we're also importing numpy and pandas for
@@ -10,11 +11,12 @@ import numpy as np
 import pandas as pd
 import random
 
-@st.cache
-def get_images(rec_sys, idx):
+def get_images(idx):
+    rec_sys = KNNRecSys()
     return rec_sys.sample_urls(4)
         
-def display(params, state):
+def display_choice(state):
+    params = state.all_params[state.index]
     st.title(f'Page {state.index+1}')
 
     urls = params[0]
@@ -42,7 +44,9 @@ def display(params, state):
     st.subheader("Which do you prefer?")
     selection = st.selectbox('', (titles[0], titles[1], titles[2], titles[3]))
     picked = np.where(titles == selection)[0][0]
-    state.selections[state.index] = urls[picked]
+    state.url_selections[state.index] = urls[picked]
+    state.title_selections[state.index] = titles[picked]
+    state.image_selections[state.index] = pics[picked]
 
 def display_results(state):
     st.title('Final Recommendations')
@@ -50,29 +54,35 @@ def display_results(state):
     row1 = st.beta_columns(5)
     row2 = st.beta_columns(5)
     
-    rec_urls, rec_titles, rec_image_paths = state.rec_sys.get_recs(state.selections)
+    rec_urls, rec_titles, rec_image_paths = state.rec_sys.get_recs(state.url_selections)
 
     for i in range(5):
         with row1[i]:
             st.image([rec_image_paths[i]], use_column_width=True)
-            st.write("{}".format(rec_titles[i].capitalize()))
+            st.write(f"[{rec_titles[i]}]({rec_urls[i]})")
         with row2[i]:
             st.image([rec_image_paths[5+i]], use_column_width=True)
-            st.write("{}".format(rec_titles[5+i].capitalize()))
-
-#     st.write(rec_urls)
-#     st.radio('which image?', rec_urls)
-    for i in range(10):
-        st.write(f"[{rec_titles[i]}]({rec_urls[i]})")
-
-#     st.write(rec_titles)
-#     st.write(rec_image_paths)
+            st.write(f"[{rec_titles[5+i]}]({rec_urls[5+i]})")
+    
+    st.title('Your Choices')
+    row3 = st.beta_columns(5)
+    
+#     st.write(state.image_selections)
+    for i in range(5):
+        with row3[i]:
+            st.image([state.image_selections[i]], use_column_width=True)
+            st.write(f"[{state.title_selections[i]}]({state.url_selections[i]})")
 
 def main():
     num_pages = 5
-    state = SessionState.get(rec_sys = KNNRecSys(), index = 0, selections = [-1 for _ in range(num_pages)])
-    all_params = {idx: get_images(state.rec_sys, idx) for idx in range(num_pages)}
-    
+    state = SessionState.get(rec_sys = KNNRecSys(),
+                             all_params = {idx: get_images(idx) for idx in range(num_pages)},
+                             index = 0, 
+                             url_selections = [-1 for _ in range(num_pages)],
+                             title_selections = [-1 for _ in range(num_pages)],
+                             image_selections = [-1 for _ in range(num_pages)],
+                            )
+        
     b, f = st.beta_columns(2)
     with b:
         if st.button('Back') and state.index > 0:
@@ -87,7 +97,7 @@ def main():
     if state.index == num_pages:
         display_results(state)
     else:
-        display(all_params[state.index], state)
+        display_choice(state)
     
 #     st.write(state.selections)
 
