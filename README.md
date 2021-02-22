@@ -4,9 +4,13 @@
 
 Run `pip install -r requirements.txt` to install python dependencies
 
+## Scrape recipes from webiste
+
+Raw data is scraped by running the `scrape_recipes.ipynb` notebook in order to scrape Asian websites for around 5 websites
+
 ## Saving Features and Data
 
-0. Raw data is scraped by running the `scrape_recipes.ipynb` notebook in order to scrape Asian websites for ~5 websites
+0. `cd feature_generation`
 
 1. Run `python save_recipes.py` in order to save the `clean_data/all_recipes_nutrient.csv` and `clean_data/url_index_mapping.csv` csv files
 
@@ -19,3 +23,7 @@ Run `pip install -r requirements.txt` to install python dependencies
 ## Serving Recommendations
 
 1. `serve_recs.py` contains relevant API class for grabbing urls and images in order to serve and sample recipes for application
+
+2. `cd streamlit` 
+
+3. `streamlit run streamlit_mvp.py` to run the app locally
