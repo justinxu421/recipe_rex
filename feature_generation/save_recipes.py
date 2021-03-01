@@ -84,13 +84,13 @@ def agg_data(filter_ = False):
     return process_dataset_list(dfs), process_dataset_list(dessert_dfs), \
         process_dataset_list(sauces_dfs), process_dataset_list(sides_dfs)
 
-def save_dfs(dfs_nutrient, name):
+def save_dfs(dfs_nutrient, folder, name):
     if len(dfs_nutrient) > 0:
         url_index_mapping = dfs_nutrient[['url', 'title', 'index']]
-        print(f'saving to clean_data/{name}_url_index_mapping.csv\n')
-        url_index_mapping.to_csv(f'../clean_data/{name}_url_index_mapping.csv', index = False)
-        print(f'saving to clean_data/{name}_recipes_nutrient.csv')
-        dfs_nutrient.to_csv(f'../clean_data/{name}_recipes_nutrient.csv', index = False)
+        print(f'saving to clean_data/{folder}/{name}_url_index_mapping.csv\n')
+        url_index_mapping.to_csv(f'../clean_data/{folder}/{name}_url_index_mapping.csv', index = False)
+        print(f'saving to clean_data/{folder}/{name}_recipes_nutrient.csv')
+        dfs_nutrient.to_csv(f'../clean_data/{folder}/{name}_recipes_nutrient.csv', index = False)
     
 def main():
     parser = argparse.ArgumentParser(description='Process some integers.')
@@ -103,10 +103,10 @@ def main():
         suffix = '_filter'
     
     mains_dfs_nutrient, desserts_dfs_nutrient, sauces_dfs_nutrient, sides_dfs_nutrient = agg_data(filter_)
-    save_dfs(mains_dfs_nutrient, f'mains{suffix}')
-    save_dfs(desserts_dfs_nutrient, f'desserts{suffix}')
-    save_dfs(sauces_dfs_nutrient, f'sauces{suffix}')
-    save_dfs(sides_dfs_nutrient, f'sides{suffix}')
+    save_dfs(mains_dfs_nutrient, 'mains', f'mains{suffix}')
+    save_dfs(desserts_dfs_nutrient, 'desserts', f'desserts{suffix}')
+    save_dfs(sauces_dfs_nutrient, 'sauces', f'sauces{suffix}')
+    save_dfs(sides_dfs_nutrient, 'sides', f'sides{suffix}')
         
 #     print('saving to clean_data/url_index_mapping.csv\n')
 #     main_url_index_mapping.to_csv('../clean_data/url_index_mapping.csv', index = False)

@@ -17,7 +17,7 @@ def filter_nutrient(x, cutoff):
     else:
         return x > cutoff
     
-def featurize_nutrients(all_dfs_nutrient, save = False):
+def featurize_nutrients(all_dfs_nutrient, save = False, folder = 'all_v1'):
     nutrient_cols = [c for c in all_dfs_nutrient.columns if 'Content' in c]
     
     # select url and nutritional columns
@@ -36,7 +36,7 @@ def featurize_nutrients(all_dfs_nutrient, save = False):
     df = df.drop(columns = nutrient_cols)
     
     if save:
-        print('saving to clean_data/nutrient_features.csv\n')
-        df.to_csv('../clean_data/nutrient_features.csv', index = True)
+        print(f'saving to clean_data/{folder}/nutrient_features.csv\n')
+        df.to_csv(f'../clean_data/{folder}/nutrient_features.csv', index = True)
     
     return df

@@ -87,7 +87,7 @@ def one_hot_encode_raw_ingrs(ingrs, gram2idx):
     
     return label
 
-def featurize_ingredients(dataset: pd.DataFrame, save = False):
+def featurize_ingredients(dataset: pd.DataFrame, save = False, folder = 'all_v1'):
     _, _, gram2idx = choose_top_grams(dataset) 
 
     # Encode unigram/bigram ingredient vectors for each recipe
@@ -98,7 +98,7 @@ def featurize_ingredients(dataset: pd.DataFrame, save = False):
 
     ing_df = pd.DataFrame(ing_features, index = dataset['url'])
     if save:
-        print('saving to clean_data/ing_features.csv\n')
-        ing_df.to_csv('../clean_data/ing_features.csv')
+        print(f'saving to clean_data/{folder}/ing_features.csv\n')
+        ing_df.to_csv(f'../clean_data/{folder}/ing_features.csv')
 
     return ing_df
