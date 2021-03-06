@@ -9,6 +9,7 @@ import numpy as np
 import pandas as pd
 import random
 import streamlit as st
+import altair as alt
 
 import sys
 sys.path.append('../')
@@ -25,7 +26,7 @@ def reset_choice(state):
     if state.index < state.num_pages:
         # reset counts on refresh
         for url in state.all_params[state.index][0]:
-            state.rec_sys.update_meat_counts(url, -1)
+            state.rec_sys.update_counts(url, -1)
 
         state.url_selections[state.index] = -1
         state.title_selections[state.index] = -1
@@ -102,14 +103,14 @@ def update_selections(state):
         # we also need to upate state if we have previously selected
         prev_url_sel = state.url_selections[prev_index]
         if prev_url_sel != -1:
-            state.rec_sys.update_meat_values(prev_url_sel, urls, -1)
+            state.rec_sys.update_values(prev_url_sel, urls, -1)
 
         state.url_selections[prev_index] = urls[state.sel]
         state.title_selections[prev_index] = titles[state.sel].capitalize()
         state.image_selections[prev_index] = pics[state.sel]
 
         # update rewards
-        state.rec_sys.update_meat_values(urls[state.sel], urls)
+        state.rec_sys.update_values(urls[state.sel], urls)
 
 # choice screen image rendering 
 def display_choices(state):
@@ -154,12 +155,28 @@ def display_results(state):
     
     # also insert user choices 
     st.header('Your Choices')
-    row3 = st.beta_columns(state.num_pages)
-    
-    for i in range(state.num_pages):
-        with row3[i]:
-            st.image([state.image_selections[i]], use_column_width=True)
-            st.write(f"[{state.title_selections[i]}]({state.url_selections[i]})")
+
+    if state.num_pages > 5:
+        half = state.num_pages // 2
+        row3 = st.beta_columns(half)
+        row4 = st.beta_columns(state.num_pages - half)
+        
+        for i in range(half):
+            with row3[i]:
+                st.image([state.image_selections[i]], use_column_width=True)
+                st.write(f"[{state.title_selections[i]}]({state.url_selections[i]})")
+
+        for i in range(state.num_pages - half):
+            with row4[i]:
+                st.image([state.image_selections[half+i]], use_column_width=True)
+                st.write(f"[{state.title_selections[half+i]}]({state.url_selections[half+i]})")
+    else:      
+        row3 = st.beta_columns(state.num_pages)
+        
+        for i in range(state.num_pages):
+            with row3[i]:
+                st.image([state.image_selections[i]], use_column_width=True)
+                st.write(f"[{state.title_selections[i]}]({state.url_selections[i]})")
 
 # render the images
 def render_images(state, debug = debug):
@@ -172,17 +189,45 @@ def render_images(state, debug = debug):
     else:
         display_results(state)
 
+    meat, starch = st.beta_columns(2)
+    meat_vals = state.rec_sys.get_value_df('meat')
+    starch_vals = state.rec_sys.get_value_df('starch')
+
+    if state.index > 0:
+        with meat: 
+            meat_vals = meat_vals.reset_index().rename({'index': 'meat'})
+            c = alt.Chart(meat_vals).mark_bar().encode(
+                x = 'index',
+                y = 'val',
+            ).configure_mark(
+                color = 'red'
+            )
+            st.altair_chart(c, use_container_width=True)
+            # st.bar_chart(meat_vals)
+        with starch:
+            starch_vals = starch_vals.reset_index().rename({'index': 'starch'})
+            c = alt.Chart(starch_vals).mark_bar().encode(
+                x = 'index',
+                y = 'val',
+            ).configure_mark(
+                color = 'blue'
+            )
+            st.altair_chart(c, use_container_width=True)
+            # st.bar_chart(starch_vals)
+
     if debug:
         st.write(f"index: {state.index}")
         st.write(f"selection: {state.sel}")
-        # st.write(state.rec_sys.counts)
-        # st.write(state.rec_sys.totals)
+        with meat:
+            st.write(meat_vals)
+        with starch:
+            st.write(starch_vals)
 
-        conf_bounds = state.rec_sys.get_confidence_df()
-        st.write(conf_bounds)
-        st.bar_chart(conf_bounds)
-
-
+        col1, col2 = st.beta_columns(2)
+        with col1:
+            st.write(state.rec_sys.counts)
+        with col2:
+            st.write(state.rec_sys.totals)
         st.write(state.title_selections)
 
 def render():
@@ -201,7 +246,6 @@ def render():
                  cols = None
                 )
 
-    
     render_buttons(state)
     render_images(state)
 

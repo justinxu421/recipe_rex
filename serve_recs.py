@@ -7,8 +7,8 @@ from matplotlib import image
 class KNNRecSys():
     def __init__(self):
         # load embeddings and index map
-        self.embeddings_df_scaled = pd.read_csv('clean_data/all_v1/embeddings_mvp_scaled.csv', index_col = 'url')
-        self.url_index_mapping = pd.read_csv('clean_data/all_v1/url_index_mapping.csv', index_col = 'url')    
+        self.embeddings_df_scaled = pd.read_csv('clean_data/all/embeddings_all_scaled.csv', index_col = 'url')
+        self.url_index_mapping = pd.read_csv('clean_data/all/url_index_mapping.csv', index_col = 'url')    
 
     # randomly sample some urls and image paths
     def sample_urls(self, samples = 4):
