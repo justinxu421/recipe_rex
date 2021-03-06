@@ -30,6 +30,9 @@ class UCBRecSys():
         self.counts = {axis: {key: 0 for key in self.all_labels[axis]} for axis in self.axes}
         self.totals = {axis: {key: 0 for key in self.all_labels[axis]} for axis in self.axes}
 
+    def get_labels(self, urls):
+        return [self.all_labels[axis].loc[urls] for axis in self.axes]
+
     # get lower and upper confidence bounds
     def get_confidence_bounds(self, axis):
         bounds = {}
@@ -158,12 +161,14 @@ class UCBRecSys():
         # get filter based on selection criterion, and then find nearest neighbors
         filtered_urls = None
 
+        self.all_filters = {}
         for axis in self.axes:  
             filtered_urls_axis = set()
             conf_df = self.get_value_df(axis)
 
-            # pick the ones with the 0.4 cutoff
+            # pick the ones with the value cutoff
             filters = conf_df[conf_df >= value_cutoff].index
+            self.all_filters[axis] = filters
             print(f'filters are {filters}')
 
             # union all relevant keys

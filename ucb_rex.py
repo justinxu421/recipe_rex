@@ -39,8 +39,9 @@ def top_bar(state):
             state.index = state.index - 1
     with r:
         if st.button('Refresh'):
-            reset_choice(state)
-            state.all_params[state.index] = get_images(state.rec_sys, state.index)
+            if state.index < state.num_pages:
+                reset_choice(state)
+                state.all_params[state.index] = get_images(state.rec_sys, state.index)
     with f:
         if st.button('Forward') and state.index < state.num_pages:
             # proceed if we made a selection
@@ -145,6 +146,13 @@ def display_results(state):
     # INSERT rec sys 
     rec_urls, rec_titles, rec_image_paths = state.rec_sys.get_recs(state.url_selections)
 
+    if debug:
+        c1, c2 = st.beta_columns(2)
+        with c1:
+            st.write(state.rec_sys.all_filters['meat'])
+        with c2:
+            st.write(state.rec_sys.all_filters['starch'])
+
     for i in range(5):
         with row1[i]:
             st.image([rec_image_paths[i]], use_column_width=True)
@@ -218,15 +226,21 @@ def render_images(state, debug = debug):
     if debug:
         st.write(f"index: {state.index}")
         st.write(f"selection: {state.sel}")
-        with meat:
-            st.write(meat_vals)
-        with starch:
-            st.write(starch_vals)
+
+        if state.index < state.num_pages:
+            meat_labels = state.rec_sys.get_labels(state.all_params[state.index][0])[0]
+            starch_labels = state.rec_sys.get_labels(state.all_params[state.index][0])[1]
+            st.write(meat_labels)
+            st.write(starch_labels)
 
         col1, col2 = st.beta_columns(2)
         with col1:
+            st.write(meat_vals)
+            st.write('counts')
             st.write(state.rec_sys.counts)
         with col2:
+            st.write(starch_vals)
+            st.write('totals')
             st.write(state.rec_sys.totals)
         st.write(state.title_selections)
 
