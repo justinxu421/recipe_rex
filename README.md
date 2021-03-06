@@ -27,3 +27,5 @@ Raw data is scraped by running the `scrape_recipes.ipynb` notebook in order to s
 2. `cd streamlit` 
 
 3. `streamlit run streamlit_mvp.py` to run the app locally
+
+4. `streamlit run ucb_rex.py` for ucb algorith locally
