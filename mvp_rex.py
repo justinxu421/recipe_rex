@@ -155,6 +155,7 @@ def render_images(state, debug = debug):
         display_results(state)
 
     if debug:
+        st.write(state.rec_sys.urls)
         st.write(f"index: {state.index}")
         st.write(f"selection: {state.sel}")
         st.write(state.title_selections)

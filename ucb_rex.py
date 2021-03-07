@@ -26,12 +26,11 @@ def get_images(rec_sys, idx):
 def reset_choice(state):
     if state.index < state.num_pages:
         # reset counts on refresh
-        for url in state.all_params[state.index][0]:
+        for url in state.all_params[state.filter_sel][state.index][0]:
             state.rec_sys.update_counts(url, -1)
 
-        state.url_selections[state.filter_sel][state.index] = -1
-        state.title_selections[state.filter_sel][state.index] = -1
-        state.image_selections[state.filter_sel][state.index] = -1
+        # reset selections
+        state.selections[state.filter_sel][state.index] = (-1, -1, -1)
 
 def top_bar(state):
     b, r, f = st.beta_columns(3)
@@ -46,7 +45,7 @@ def top_bar(state):
     with f:
         if st.button('Forward') and state.index < state.num_pages:
             # proceed if we made a selection
-            if state.title_selections[state.filter_sel][state.index] != -1:
+            if state.selections[state.filter_sel][state.index] != (-1, -1, -1):
                 state.index = state.index + 1
             else:
                 state.msg = "Please make a selection"
@@ -105,13 +104,12 @@ def update_selections(state):
         pics = params[2]
 
         # we also need to upate state if we have previously selected
-        prev_url_sel = state.url_selections[state.filter_sel][prev_index]
+        prev_url_sel = state.selections[state.filter_sel][prev_index][0]
         if prev_url_sel != -1:
             state.rec_sys.update_values(prev_url_sel, urls, -1)
 
-        state.url_selections[state.filter_sel][prev_index] = urls[state.sel]
-        state.title_selections[state.filter_sel][prev_index] = titles[state.sel].capitalize()
-        state.image_selections[state.filter_sel][prev_index] = pics[state.sel]
+        # write selections
+        state.selections[state.filter_sel][prev_index] = (urls[state.sel], titles[state.sel].capitalize(), pics[state.sel])
 
         # update rewards
         state.rec_sys.update_values(urls[state.sel], urls)
@@ -128,16 +126,12 @@ def display_choices(state):
     pics = params[2]
     keys = params[3]
 
-    # if debug:
-    #     st.write('axis keys are:')
-    #     st.write(keys)
-
     for i in range(4):
         with state.cols[i]:
             # state.buttons[i].button('test')
             st.image([pics[i]], use_column_width=True)
-            st.write(keys[i])
             st.write("{}".format(titles[i].capitalize()))
+            st.write(keys[i])
 
 # result screen image rendering
 def display_results(state):
@@ -153,7 +147,8 @@ def display_results(state):
     row2 = st.beta_columns(5)
     
     # INSERT rec sys 
-    rec_urls, rec_titles, rec_image_paths = state.rec_sys.get_recs(state.url_selections)
+    url_selections = [x[0] for x in state.selections[state.filter_sel]]
+    rec_urls, rec_titles, rec_image_paths = state.rec_sys.get_recs(url_selections)
 
     if debug:
         c1, c2 = st.beta_columns(2)
@@ -179,21 +174,24 @@ def display_results(state):
         row4 = st.beta_columns(state.num_pages - half)
         
         for i in range(half):
+            url, title, image_path = state.selections[state.filter_sel][i]
             with row3[i]:
-                st.image([state.image_selections[state.filter_sel][i]], use_column_width=True)
-                st.write(f"[{state.title_selections[state.filter_sel][i]}]({state.url_selections[state.filter_sel][i]})")
+                st.image([image_path], use_column_width=True)
+                st.write(f"[{title}]({url})")
 
         for i in range(state.num_pages - half):
+            url, title, image_path = state.selections[state.filter_sel][5+i]
             with row4[i]:
-                st.image([state.image_selections[state.filter_sel][half+i]], use_column_width=True)
-                st.write(f"[{state.title_selections[state.filter_sel][half+i]}]({state.url_selections[state.filter_sel][half+i]})")
+                st.image([image_path], use_column_width=True)
+                st.write(f"[{title}]({url})")
     else:      
         row3 = st.beta_columns(state.num_pages)
         
         for i in range(state.num_pages):
+            url, title, image_path = state.selections[state.filter_sel][i]
             with row3[i]:
-                st.image([state.image_selections[state.filter_sel][i]], use_column_width=True)
-                st.write(f"[{state.title_selections[state.filter_sel][i]}]({state.url_selections[state.filter_sel][i]})")
+                st.image([image_path], use_column_width=True)
+                st.write(f"[{title}]({url})")
 
 # render the images
 def render_images(state, debug = debug):
@@ -217,10 +215,9 @@ def render_images(state, debug = debug):
                 x = 'index',
                 y = 'val',
             ).configure_mark(
-                color = 'red'
+                color = 'green'
             )
             st.altair_chart(c, use_container_width=True)
-            # st.bar_chart(meat_vals)
         with starch:
             starch_vals = starch_vals.reset_index().rename({'index': 'starch'})
             c = alt.Chart(starch_vals).mark_bar().encode(
@@ -230,11 +227,11 @@ def render_images(state, debug = debug):
                 color = 'blue'
             )
             st.altair_chart(c, use_container_width=True)
-            # st.bar_chart(starch_vals)
 
     if debug:
         st.write(f"index: {state.index}")
         st.write(f"selection: {state.sel}")
+        st.write(state.rec_sys.urls)
 
         st.write(state.rec_sys.get_confidence_bounds('meat'))
         st.write(state.rec_sys.get_confidence_bounds('starch'))
@@ -253,7 +250,7 @@ def render_images(state, debug = debug):
             st.write(starch_vals)
             st.write('totals')
             st.write(state.rec_sys.totals)
-        st.write(state.title_selections)
+        st.write(state.selections[state.filter_sel])
 
 def render():
     num_pages = 10
@@ -271,24 +268,23 @@ def render():
     }
 
     state = ss.get(rec_sys = rec_sys_main, 
-                 rec_sys_dict = rec_sys_dict,
-                 filter_sel = 'mains',
-                 all_params = {filter_: {idx: -1 for idx in range(num_pages)} for filter_ in filters},
-                 filter_index = {filter_: 0 for filter_ in filters},
-                 index = 0, 
-                 url_selections = {filter_: [-1 for _ in range(num_pages)] for filter_ in filters},
-                 title_selections = {filter_: [-1 for _ in range(num_pages)] for filter_ in filters},
-                 image_selections = {filter_: [-1 for _ in range(num_pages)] for filter_ in filters},
-                 num_pages = num_pages,
-                 sel = -1,
-                 cols = None
-                )
+         rec_sys_dict = rec_sys_dict,
+         filter_sel = 'mains',
+         all_params = {filter_: {idx: -1 for idx in range(num_pages)} for filter_ in filters},
+         num_pages = num_pages,
+         # index to indicate page number
+         filter_index = {filter_: 0 for filter_ in filters},
+         index = 0, 
+         # url, title, image path
+         selections = {filter_: [(-1, -1, -1) for _ in range(num_pages)] for filter_ in filters},
+         sel = -1,
+         cols = None
+     )
 
     state.filter_index[state.filter_sel] = state.index
     state.filter_sel = st.sidebar.radio('Filter selection', filters)
     state.index = state.filter_index[state.filter_sel]
     state.rec_sys = state.rec_sys_dict[state.filter_sel]
-    st.write(state.filter_sel)
 
     render_buttons(state)
     render_images(state)

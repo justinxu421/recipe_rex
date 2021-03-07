@@ -30,6 +30,9 @@ class UCBRecSys():
         self.counts = {axis: {key: 0 for key in self.all_labels[axis]} for axis in self.axes}
         self.totals = {axis: {key: 0 for key in self.all_labels[axis]} for axis in self.axes}
 
+        # set of currently served urls
+        self.urls = set()
+
     def get_labels(self, urls):
         return [self.all_labels[axis].loc[urls] for axis in self.axes]
 
@@ -62,6 +65,7 @@ class UCBRecSys():
                 return key 
 
         ucb_values = {key: bound[1] for key, bound in self.get_confidence_bounds(axis).items()}
+        # help print out what the current ucb selections are
         print(sorted(ucb_values.items(), key = lambda x: -x[1]))
 
         # return arm with largest ucb
@@ -72,6 +76,12 @@ class UCBRecSys():
 
     # update our arms
     def update_counts(self, url, increment = 1):
+        # add or remove to url set
+        if increment > 0:
+            self.urls.add(url)
+        else:
+            self.urls.remove(url)
+
         for axis in self.axes:
             for key, val in self.all_labels[axis].loc[url].items():
                 if val == 1:
@@ -99,7 +109,7 @@ class UCBRecSys():
         for axis in self.axes:
             label_df = self.all_labels[axis]
             key = key_dict[axis]
-            key_urls = set(label_df[label_df[key] == 1].index)
+            key_urls = set(label_df[label_df[key] == 1].index) - self.urls
             if filtered_urls is None:
                 filtered_urls = key_urls
             else:
@@ -114,7 +124,7 @@ class UCBRecSys():
             label_df = self.all_labels[axis]
             key = key_dict[axis]
             print('axis is {}, key is {}'.format(axis, key))
-            key_urls = set(label_df[label_df[key] == 1].index)
+            key_urls = set(label_df[label_df[key] == 1].index) - self.urls
             return random.choice(list(key_urls))
 
     # randomly sample some urls and image paths
@@ -175,7 +185,7 @@ class UCBRecSys():
         return [f'images_resized/image_{index}.jpg' for index in self.url_index_mapping.loc[urls]['index']]
 
     # return a dictionary mapping top 10 urls and title and image index
-    def get_recs(self, urls, value_cutoff = 0.5):
+    def get_recs(self, urls, value_cutoff = 0.75):
         # get filter based on selection criterion, and then find nearest neighbors
         filtered_urls = None
 
