@@ -18,14 +18,14 @@ Raw data is scraped by running the `scrape_recipes.ipynb` notebook in order to s
 
 3. Run `python center_crop_resize_images.py` in order to resize and center crop all images to 200 by 200 to the `images_resized` directory so that thumbnails are all standardized
 
-4. Run `python get_embeddings.py` in order to save the embeddings needed to run recommendation algorithms. This saves 4 files: `clean_data/nutrient_features.csv`, `clean_data/ing_features.csv`,  `clean_data/embeddings_features_mvp.csv`, and `clean_data/embeddings_mvp_scaled.csv`, where the embeddings scaled is used for recipe similarity and the other csv's are intermediate
+4. Run `python get_embeddings.py` in order to save the embeddings needed to run recommendation algorithms. This saves 4 files: `clean_data/{folder}/nutrient_features.csv`, `clean_data/{folder}ing_features.csv`,  `clean_data/{folder}embeddings_features_mvp.csv`, and `clean_data/embeddings_mvp_scaled.csv`, where the embeddings scaled is used for recipe similarity and the other csv's are intermediate. 
+
+-- Folder represents ['mains', 'desserts', 'sides']
+
+5. Run `python label_recipes.py` to get the keyword labels for our recipes
 
 ## Serving Recommendations
 
 1. `serve_recs.py` contains relevant API class for grabbing urls and images in order to serve and sample recipes for application
 
-2. `cd streamlit` 
-
-3. `streamlit run streamlit_mvp.py` to run the app locally
-
-4. `streamlit run ucb_rex.py` for ucb algorith locally
+2. `streamlit run ucb_rex.py` for ucb algorithm app locally
