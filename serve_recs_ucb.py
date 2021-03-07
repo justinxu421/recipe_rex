@@ -8,13 +8,13 @@ from matplotlib import image
 from collections import defaultdict
 
 class UCBRecSys():
-    def __init__(self):
+    def __init__(self, folder = 'mains', file = 'mains_filter'):
         # load embeddings and index map
-        self.embeddings_df_scaled = pd.read_csv('clean_data/mains/embeddings_mains_filter_scaled.csv', index_col = 'url')
-        self.url_index_mapping = pd.read_csv('clean_data/mains/mains_filter_url_index_mapping.csv', index_col = 'url')    
+        self.embeddings_df_scaled = pd.read_csv(f'clean_data/{folder}/embeddings_{file}_scaled.csv', index_col = 'url')
+        self.url_index_mapping = pd.read_csv(f'clean_data/{folder}/{file}_url_index_mapping.csv', index_col = 'url')    
 
-        self.meat_labels = pd.read_csv('clean_data/mains/meat_labels.csv', index_col = 'url').loc[self.embeddings_df_scaled.index]
-        self.starch_labels = pd.read_csv('clean_data/mains/starch_labels.csv', index_col = 'url').loc[self.embeddings_df_scaled.index]
+        self.meat_labels = pd.read_csv(f'clean_data/{folder}/meat_labels.csv', index_col = 'url').loc[self.embeddings_df_scaled.index]
+        self.starch_labels = pd.read_csv(f'clean_data/{folder}/starch_labels.csv', index_col = 'url').loc[self.embeddings_df_scaled.index]
         # self.taste_labels = pd.read_csv('clean_data/mains/nutrient_features.csv', index_col = 'url')
 
         # flags for which axes to build filters/UCB for
@@ -62,6 +62,7 @@ class UCBRecSys():
                 return key 
 
         ucb_values = {key: bound[1] for key, bound in self.get_confidence_bounds(axis).items()}
+        print(sorted(ucb_values.items(), key = lambda x: -x[1]))
 
         # return arm with largest ucb
         max_ = max(ucb_values.values())
@@ -93,28 +94,46 @@ class UCBRecSys():
     # based on the selected key arm and axis, pick a random url
     def get_random_url(self, key_dict):
         # pick a random axis to select url
-        axis = random.choice(self.axes)
-        label_df = self.all_labels[axis]
-        key = key_dict[axis]
-        key_urls = set(label_df[label_df[key] == 1].index)
+
+        filtered_urls = None
+        for axis in self.axes:
+            label_df = self.all_labels[axis]
+            key = key_dict[axis]
+            key_urls = set(label_df[label_df[key] == 1].index)
+            if filtered_urls is None:
+                filtered_urls = key_urls
+            else:
+                filtered_urls &= key_urls 
 
         # sample a random url from this selected list
-        return random.choice(list(key_urls))
+        if len(filtered_urls) > 1:
+            print(f'key dict is {key_dict}')
+            return random.choice(list(filtered_urls))
+        else:
+            axis = random.choice(self.axes)
+            label_df = self.all_labels[axis]
+            key = key_dict[axis]
+            print('axis is {}, key is {}'.format(axis, key))
+            key_urls = set(label_df[label_df[key] == 1].index)
+            return random.choice(list(key_urls))
 
     # randomly sample some urls and image paths
-    def sample_urls(self, num_samples = 4, num_random = 1):
-        keys = []
+    def sample_urls(self, num_samples = 4, num_random = 0):
+        keys, urls = [], []
 
         # select how many random and how many greedy
         num_greedy = num_samples - num_random
 
-        # select random key and random url
+        # select random keys and then get random url
         for _ in range(num_random):
             key_dict = {}
             for axis in self.axes:
                 key = random.choice(self.all_labels[axis].columns)
                 key_dict[axis] = key
             keys.append(key_dict)
+            url = self.get_random_url(key_dict)
+            self.update_counts(url)
+            urls.append(url)
 
         # select random urls based on meats based on ucb, update with reward 1
         for _ in range(num_greedy):
@@ -123,18 +142,17 @@ class UCBRecSys():
                 key = self.select_axis_arm(axis)
                 key_dict[axis] = key
             keys.append(key_dict)
-
-        urls = []
-        for key_dict in keys:
             url = self.get_random_url(key_dict)
             self.update_counts(url)
             urls.append(url)
+
+        # random.shuffle(urls)
         print(keys)
 
         titles = self.url_index_mapping.loc[urls]['title'].values
         image_paths = self.get_image_paths(urls)
         
-        return urls, titles, image_paths
+        return urls, titles, image_paths, keys
     
     # plot 10 images given image paths
     def plot_images(self, image_paths):
