@@ -19,7 +19,7 @@ def label_all_meats(ing, label_names):
     pork = ['pork', 'bacon', 'ham', 'sausage', 'dog', 'spam', 'rib', 'pastrami', 'prosciutto']
     fish = ['fish', 'tilapia', 'salmon', 'cod', 'flounder', 'tuna', 'sardine', 'barramundi', 'branzino', 'porgies', 'bass']
     seafood = ['shrimp', 'octopus', 'oysters', 'clam', 'abalone', 'squid', 'calamari', 'seafood', 'crab', 'lobster', 'mussel', 'scallop', 'snail']
-    exclude = ['chicken stock', 'fish sauce']
+    exclude = ['chicken broth', 'chicken stock', 'beef broth', 'beef stock', 'fish sauce', 'dried shrimp', 'shrimp paste']
     
     poultry_ = label_meat(ing, poultry, exclude)
     beef_ = label_meat(ing, beef, exclude)
@@ -72,7 +72,7 @@ def label_starch(ing, include, exclude):
     return 0
 
 def label_soup(ing, title):
-    soup = ['cups chicken broth', 'cups vegetable stock', 'cups chicken stock']
+    soup = ['cups vegetable stock', 'cups chicken stock']
     soup_ = label_starch(ing, soup, [])
     if soup_ or ('soup' in title.lower() and 'soup dumpling' not in title.lower()):
         return 1
@@ -82,7 +82,8 @@ def label_all_starches(ing, title, label_names):
     noodle = ['noodle', 'vermicelli']
     rice = ['rice']
     stew = ['curry', 'stew', 'garam masala']
-    exclude = ['rice wine', 'rice vinegar', 'rice powder', 'rice noodle', 'vermicelli']
+    exclude = ['licorice', 'rice wine', 'rice vinegar', 'rice powder', 'rice noodle', 'rice paper', 'vermicelli', 
+                'curry powder', 'curry paste']
     
     noodle_ = label_starch(ing, noodle, [])
     rice_ = label_starch(ing, rice, exclude)

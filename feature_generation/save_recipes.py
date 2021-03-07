@@ -90,6 +90,7 @@ def save_dfs(dfs_nutrient, folder, name):
         # save indices based on all mapping
         if folder == 'all':
             url_index_mapping = dfs_nutrient[['url', 'title', 'index']]
+            url_index_mapping['title'] = url_index_mapping['title'].str.capitalize()
             print(f'saving to clean_data/{folder}/{name}_url_index_mapping.csv\n')
             url_index_mapping.to_csv(f'../clean_data/{folder}/{name}_url_index_mapping.csv', index = False)
         # if filter, then read from the all_url mapping we just saved

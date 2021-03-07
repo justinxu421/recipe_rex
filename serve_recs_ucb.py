@@ -185,7 +185,7 @@ class UCBRecSys():
         return [f'images_resized/image_{index}.jpg' for index in self.url_index_mapping.loc[urls]['index']]
 
     # return a dictionary mapping top 10 urls and title and image index
-    def get_recs(self, urls, value_cutoff = 0.75):
+    def get_recs(self, urls, value_cutoff = 0.6):
         # get filter based on selection criterion, and then find nearest neighbors
         filtered_urls = None
 
@@ -213,7 +213,7 @@ class UCBRecSys():
         # restrict to urls in embeddings df
         filtered_urls &= set(self.embeddings_df_scaled.index)
 
-        _, rec_urls = get_recs_knn_average(self.embeddings_df_scaled.loc[filtered_urls], urls)
+        _, rec_urls = get_recs_knn_average(self.embeddings_df_scaled, urls, filtered_urls)
         rec_titles = self.url_index_mapping.loc[rec_urls]['title'].values
         rec_image_paths = self.get_image_paths(rec_urls)
         return rec_urls, rec_titles, rec_image_paths

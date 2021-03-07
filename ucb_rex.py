@@ -109,7 +109,7 @@ def update_selections(state):
             state.rec_sys.update_values(prev_url_sel, urls, -1)
 
         # write selections
-        state.selections[state.filter_sel][prev_index] = (urls[state.sel], titles[state.sel].capitalize(), pics[state.sel])
+        state.selections[state.filter_sel][prev_index] = (urls[state.sel], titles[state.sel], pics[state.sel])
 
         # update rewards
         state.rec_sys.update_values(urls[state.sel], urls)
@@ -126,12 +126,27 @@ def display_choices(state):
     pics = params[2]
     keys = params[3]
 
+    meat_labels = state.rec_sys.get_labels(state.all_params[state.filter_sel][state.index][0])[0]
+    starch_labels = state.rec_sys.get_labels(state.all_params[state.filter_sel][state.index][0])[1]
+
     for i in range(4):
         with state.cols[i]:
             # state.buttons[i].button('test')
             st.image([pics[i]], use_column_width=True)
-            st.write("{}".format(titles[i].capitalize()))
-            st.write(keys[i])
+
+            if debug:
+                st.write(f"[{titles[i]}]({urls[i]})")
+            else:
+                st.write("{}".format(titles[i]))
+
+
+            for key, val in meat_labels.iloc[i].items():
+                if val == 1:
+                    st.write(key)
+
+            for key, val in starch_labels.iloc[i].items():
+                if val == 1:
+                    st.write(key)
 
 # result screen image rendering
 def display_results(state):
