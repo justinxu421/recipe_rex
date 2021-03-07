@@ -124,7 +124,8 @@ def display_choices(state):
     urls = params[0]
     titles = params[1]
     pics = params[2]
-    keys = params[3]
+    total_time = params[3]
+    num_ingredients = params[4]
 
     meat_labels = state.rec_sys.get_labels(state.all_params[state.filter_sel][state.index][0])[0]
     starch_labels = state.rec_sys.get_labels(state.all_params[state.filter_sel][state.index][0])[1]
@@ -139,14 +140,16 @@ def display_choices(state):
             else:
                 st.write("{}".format(titles[i]))
 
+            st.write(f'total time: {total_time[i]}')
+            st.write(f'num ingredients: {num_ingredients[i]}')
 
             for key, val in meat_labels.iloc[i].items():
                 if val == 1:
-                    st.write(key)
+                    st.text(key)
 
             for key, val in starch_labels.iloc[i].items():
                 if val == 1:
-                    st.write(key)
+                    st.text(key)
 
 # result screen image rendering
 def display_results(state):

@@ -160,9 +160,11 @@ class UCBRecSys():
         print(keys)
 
         titles = self.url_index_mapping.loc[urls]['title'].values
+        total_time = self.url_index_mapping.loc[urls]['total_time'].values
+        num_ingredients = self.url_index_mapping.loc[urls]['num_ingredients'].values
         image_paths = self.get_image_paths(urls)
         
-        return urls, titles, image_paths, keys
+        return urls, titles, image_paths, total_time, num_ingredients
     
     # plot 10 images given image paths
     def plot_images(self, image_paths):
