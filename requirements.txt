@@ -1,3 +1,12 @@
-gensim
+# gensim
 Pillow
 streamlit
+numpy 
+pandas 
+jupyterlab 
+ipywidgets
+pigeonXT-jupyter
+
+# To use data labeling notebook, do this first
+# jupyter nbextension enable --py widgetsnbextension
+# jupyter labextension install @jupyter-widgets/jupyterlab-manager
