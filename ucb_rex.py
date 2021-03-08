@@ -151,37 +151,48 @@ def display_choices(state):
                 if val == 1:
                     st.text(key)
 
+def write_recs(title, rec_urls, rec_titles, rec_image_paths):
+    st.subheader(title)
+
+    # 2 columns for 10 recs 
+    row1 = st.beta_columns(5)
+    row2 = st.beta_columns(5)
+    
+    for i in range(5):
+        with row1[i]:
+            if i < len(rec_urls):
+                st.image([rec_image_paths[i]], use_column_width=True)
+                st.write(f"[{rec_titles[i]}]({rec_urls[i]})")
+        with row2[i]:
+            if 5+i < len(rec_urls):
+               st.image([rec_image_paths[5+i]], use_column_width=True)
+               st.write(f"[{rec_titles[5+i]}]({rec_urls[5+i]})")
+
 # result screen image rendering
 def display_results(state):
-    state.header.header('Final Recommendations')
+    state.header.header('You Might Like')
 
     # reset state buttons
     if state.buttons:
         for i in range(4):
             state.buttons[i].empty()
     
-    # 2 columns for 10 recs 
-    row1 = st.beta_columns(5)
-    row2 = st.beta_columns(5)
-    
     # INSERT rec sys 
     url_selections = [x[0] for x in state.selections[state.filter_sel]]
-    rec_urls, rec_titles, rec_image_paths = state.rec_sys.get_recs(url_selections)
+
+
+    d = state.rec_sys.get_recs_most_common(url_selections)
+    if d:
+        for title, (rec_urls, rec_titles, rec_image_paths) in d.items():
+            # st.write(len(rec_urls))
+            write_recs(title, rec_urls, rec_titles, rec_image_paths)
+    else:
+        ## Overall RECS
+        rec_urls, rec_titles, rec_image_paths = state.rec_sys.get_recs(url_selections)
+        write_recs('Your final recs', rec_urls, rec_titles, rec_image_paths)
 
     if debug:
-        c1, c2 = st.beta_columns(2)
-        with c1:
-            st.write(state.rec_sys.all_filters['meat'])
-        with c2:
-            st.write(state.rec_sys.all_filters['starch'])
-
-    for i in range(5):
-        with row1[i]:
-            st.image([rec_image_paths[i]], use_column_width=True)
-            st.write(f"[{rec_titles[i]}]({rec_urls[i]})")
-        with row2[i]:
-            st.image([rec_image_paths[5+i]], use_column_width=True)
-            st.write(f"[{rec_titles[5+i]}]({rec_urls[5+i]})")
+        st.write({' '.join(a): b for a, b in state.rec_sys.label_counts.items()})
     
     # also insert user choices 
     st.header('Your Choices')

@@ -5,7 +5,7 @@ import random
 
 from get_recommendations_knn import get_recs_knn_average
 from matplotlib import image 
-from collections import defaultdict
+from collections import defaultdict, Counter
 
 class UCBRecSys():
     def __init__(self, folder = 'mains', file = 'mains_filter'):
@@ -186,25 +186,49 @@ class UCBRecSys():
     def get_image_paths(self, urls):
         return [f'images_resized/image_{index}.jpg' for index in self.url_index_mapping.loc[urls]['index']]
 
-    # return a dictionary mapping top 10 urls and title and image index
-    def get_recs(self, urls, value_cutoff = 0.6):
-        # get filter based on selection criterion, and then find nearest neighbors
+    def unwrap_tuple(self, tup):
+        d = {}
+        for i, axis in enumerate(self.axes):
+            d[axis] = [tup[i]]
+        return d
+
+    def string_dict(self, d):
+        l = []
+        for axis in self.axes:
+            l.append(d[axis][0])
+        return ' '.join(l)
+
+    def get_most_common_labels(self, urls):
+        import itertools
+
+        self.label_counts = Counter()
+        for url in urls:
+            axis_keys = []
+            for axis in self.axes:
+                label_df = self.all_labels[axis] 
+                keys = [key for key, val in label_df.loc[url].items() if val == 1]
+                axis_keys.append(keys)
+
+            for tup in itertools.product(*axis_keys):
+                self.label_counts[tup] += 1
+        print(self.label_counts)
+        
+        most_common_labels = self.label_counts.most_common(4)
+        return [self.unwrap_tuple(tup) for tup, count in most_common_labels if count >= 2]
+
+    def get_recs_filter(self, urls, all_filters):
         filtered_urls = None
-
-        self.all_filters = {}
-        for axis in self.axes:  
+        for axis in self.axes:
+            filters = all_filters[axis]
             filtered_urls_axis = set()
-            conf_df = self.get_value_df(axis)
+            label_df = self.all_labels[axis]
 
-            # pick the ones with the value cutoff
-            filters = conf_df[conf_df >= value_cutoff].index
-            self.all_filters[axis] = filters
-            print(f'filters are {filters}')
-
-            # union all relevant keys
-            for key in filters:
-                label_df = self.all_labels[axis]
-                filtered_urls_axis |= set(label_df[label_df[key] == 1].index)
+            # if at least 1 filter, then find the relevant keys if len(filters) > 0: # union all relevant keys
+            if len(filters) > 0:
+                for key in filters:
+                    filtered_urls_axis |= set(label_df[label_df[key] == 1].index)
+            else:
+                filtered_urls_axis = set(label_df.index)
 
             # intersect the axes
             if filtered_urls is None:
@@ -218,7 +242,31 @@ class UCBRecSys():
         _, rec_urls = get_recs_knn_average(self.embeddings_df_scaled, urls, filtered_urls)
         rec_titles = self.url_index_mapping.loc[rec_urls]['title'].values
         rec_image_paths = self.get_image_paths(rec_urls)
+
         return rec_urls, rec_titles, rec_image_paths
+
+    # return a dictionary mapping top 10 urls and title and image index
+    def get_recs(self, urls, value_cutoff = 0.6):
+        # get filter based on selection criterion, and then find nearest neighbors
+        all_filters = {}
+
+        for axis in self.axes:  
+            conf_df = self.get_value_df(axis)
+            # pick the ones with the value cutoff
+            filters = conf_df[conf_df >= value_cutoff].index
+            all_filters[axis] = filters
+
+        print(all_filters)
+        return self.get_recs_filter(urls, all_filters)
+
+    def get_recs_most_common(self, urls):
+        d = {}
+        all_filters_list = self.get_most_common_labels(urls)
+        for all_filters in all_filters_list:
+            rec_urls, rec_titles, rec_image_paths = self.get_recs_filter(urls, all_filters)
+            # if len(rec_urls) == 10:
+            d[self.string_dict(all_filters)] = (rec_urls, rec_titles, rec_image_paths)
+        return d
 
 def main():
     rec_sys = UCBRecSys()

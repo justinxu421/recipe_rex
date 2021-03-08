@@ -34,7 +34,7 @@ def get_recs_knn_average(df, urls, filtered_urls = set(), num_neighbors = 10):
 
     # get x based on the index
     x = df.iloc[indices].to_numpy().mean(axis = 0).reshape((1, -1))
-    dists, neighbors = model_knn.kneighbors(x, 1000)
+    dists, neighbors = model_knn.kneighbors(x, len(df))
 
     # find neighbors until we hit 10
     valid_neighbors = []
