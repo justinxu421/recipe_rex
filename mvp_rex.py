@@ -17,8 +17,7 @@ from serve_recs import *
 debug = False
 
 # method to get 4 random images
-def get_images(idx):
-    rec_sys = KNNRecSys()
+def get_images(rec_sys, idx):
     return rec_sys.sample_urls(4)
       
 # method to reset the selections on reset
@@ -36,7 +35,7 @@ def top_bar(state):
     with r:
         if st.button('Refresh'):
             reset_choice(state)
-            state.all_params[state.index] = get_images(state.index)
+            state.all_params[state.index] = get_images(state.rec_sys, state.index)
     with f:
         if st.button('Forward') and state.index < state.num_pages:
             # proceed if we made a selection
@@ -156,22 +155,25 @@ def render_images(state, debug = debug):
         display_results(state)
 
     if debug:
+        st.write(state.rec_sys.urls)
         st.write(f"index: {state.index}")
         st.write(f"selection: {state.sel}")
         st.write(state.title_selections)
 
 def render():
     num_pages = 5
-    state = ss.get(rec_sys = KNNRecSys(),
-                             all_params = {idx: get_images(idx) for idx in range(num_pages)},
-                             index = 0, 
-                             url_selections = [-1 for _ in range(num_pages)],
-                             title_selections = [-1 for _ in range(num_pages)],
-                             image_selections = [-1 for _ in range(num_pages)],
-                             num_pages = num_pages,
-                             sel = -1,
-                             cols = None
-                            )
+    rec_sys = KNNRecSys('desserts', 'desserts_filter')
+    # rec_sys = KNNRecSys('sides', 'sides_filter')
+    state = ss.get(rec_sys = rec_sys,
+                 all_params = {idx: get_images(rec_sys, idx) for idx in range(num_pages)},
+                 index = 0, 
+                 url_selections = [-1 for _ in range(num_pages)],
+                 title_selections = [-1 for _ in range(num_pages)],
+                 image_selections = [-1 for _ in range(num_pages)],
+                 num_pages = num_pages,
+                 sel = -1,
+                 cols = None
+                )
     
     render_buttons(state)
     render_images(state)

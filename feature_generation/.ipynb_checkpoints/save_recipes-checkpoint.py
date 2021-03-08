@@ -84,34 +84,42 @@ def agg_data(filter_ = False):
     return process_dataset_list(dfs), process_dataset_list(dessert_dfs), \
         process_dataset_list(sauces_dfs), process_dataset_list(sides_dfs)
 
+def transform_features(dfs_nutrient):
+    dfs_nutrient.loc[dfs_nutrient['total_time'] > 120, 'total_time'] = 120
+    dfs_nutrient['num_ingredients'] = dfs_nutrient['ingredients'].apply(len)
+    return dfs_nutrient
+
 def save_dfs(dfs_nutrient, folder, name):
     if len(dfs_nutrient) > 0:
-        url_index_mapping = dfs_nutrient[['url', 'title', 'index']]
-        print(f'saving to clean_data/{folder}/{name}_url_index_mapping.csv\n')
-        url_index_mapping.to_csv(f'../clean_data/{folder}/{name}_url_index_mapping.csv', index = False)
+
+        # save indices based on all mapping
+        if folder == 'all':
+            dfs_nutrient = transform_features(dfs_nutrient)
+            url_index_mapping = dfs_nutrient[['url', 'title', 'index', 'total_time', 'num_ingredients']]
+            url_index_mapping['title'] = url_index_mapping['title'].str.capitalize()
+            print(f'saving to clean_data/{folder}/{name}_url_index_mapping.csv\n')
+            url_index_mapping.to_csv(f'../clean_data/{folder}/{name}_url_index_mapping.csv', index = False)
+        # if filter, then read from the all_url mapping we just saved
+        else:
+            all_url_index_mapping = pd.read_csv('../clean_data/all/all_url_index_mapping.csv', index_col = 'url')
+
+            url_index_mapping = all_url_index_mapping.loc[dfs_nutrient['url'].values]
+            print(f'saving to clean_data/{folder}/{name}_url_index_mapping.csv\n')
+            url_index_mapping.to_csv(f'../clean_data/{folder}/{name}_url_index_mapping.csv', index = True)
+
+
         print(f'saving to clean_data/{folder}/{name}_recipes_nutrient.csv')
         dfs_nutrient.to_csv(f'../clean_data/{folder}/{name}_recipes_nutrient.csv', index = False)
     
 def main():
-    parser = argparse.ArgumentParser(description='Process some integers.')
-    parser.add_argument('--foo', '-f', default = False, action = 'store_true')
-    args = parser.parse_args()
-    filter_ = args.foo
-    
-    suffix = ''
-    if filter_:
-        suffix = '_filter'
-    
-    mains_dfs_nutrient, desserts_dfs_nutrient, sauces_dfs_nutrient, sides_dfs_nutrient = agg_data(filter_)
-    save_dfs(mains_dfs_nutrient, 'mains', f'mains{suffix}')
-    save_dfs(desserts_dfs_nutrient, 'desserts', f'desserts{suffix}')
-    save_dfs(sauces_dfs_nutrient, 'sauces', f'sauces{suffix}')
-    save_dfs(sides_dfs_nutrient, 'sides', f'sides{suffix}')
-        
-#     print('saving to clean_data/url_index_mapping.csv\n')
-#     main_url_index_mapping.to_csv('../clean_data/url_index_mapping.csv', index = False)
-#     print('saving to clean_data/all_recipes_nutrient.csv')
-#     all_dfs_nutrient.to_csv('../clean_data/all_recipes_nutrient.csv', index = False)
+    all_dfs_nutrient, _, _, _ = agg_data(False)
+    mains_dfs_nutrient, desserts_dfs_nutrient, sauces_dfs_nutrient, sides_dfs_nutrient = agg_data(True)
 
+    save_dfs(all_dfs_nutrient, 'all', 'all')
+    save_dfs(mains_dfs_nutrient, 'mains', 'mains_filter')
+    save_dfs(desserts_dfs_nutrient, 'desserts', 'desserts_filter')
+    save_dfs(sauces_dfs_nutrient, 'sauces', 'sauces_filter')
+    save_dfs(sides_dfs_nutrient, 'sides', 'sides_filter')
+        
 if __name__ == "__main__":
     main()

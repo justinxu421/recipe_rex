@@ -5,16 +5,16 @@ import random
 
 from get_recommendations_knn import get_recs_knn_average
 from matplotlib import image 
-from collections import defaultdict
+from collections import defaultdict, Counter
 
 class UCBRecSys():
-    def __init__(self):
+    def __init__(self, folder = 'mains', file = 'mains_filter'):
         # load embeddings and index map
-        self.embeddings_df_scaled = pd.read_csv('clean_data/mains/embeddings_mains_filter_scaled.csv', index_col = 'url')
-        self.url_index_mapping = pd.read_csv('clean_data/mains/mains_filter_url_index_mapping.csv', index_col = 'url')    
+        self.embeddings_df_scaled = pd.read_csv(f'clean_data/{folder}/embeddings_{file}_scaled.csv', index_col = 'url')
+        self.url_index_mapping = pd.read_csv(f'clean_data/{folder}/{file}_url_index_mapping.csv', index_col = 'url')    
 
-        self.meat_labels = pd.read_csv('clean_data/mains/meat_labels.csv', index_col = 'url').loc[self.embeddings_df_scaled.index]
-        self.starch_labels = pd.read_csv('clean_data/mains/starch_labels.csv', index_col = 'url').loc[self.embeddings_df_scaled.index]
+        self.meat_labels = pd.read_csv(f'clean_data/{folder}/meat_labels.csv', index_col = 'url').loc[self.embeddings_df_scaled.index]
+        self.starch_labels = pd.read_csv(f'clean_data/{folder}/starch_labels.csv', index_col = 'url').loc[self.embeddings_df_scaled.index]
         # self.taste_labels = pd.read_csv('clean_data/mains/nutrient_features.csv', index_col = 'url')
 
         # flags for which axes to build filters/UCB for
@@ -29,6 +29,9 @@ class UCBRecSys():
         # initialize ucb parameters
         self.counts = {axis: {key: 0 for key in self.all_labels[axis]} for axis in self.axes}
         self.totals = {axis: {key: 0 for key in self.all_labels[axis]} for axis in self.axes}
+
+        # set of currently served urls
+        self.urls = set()
 
     def get_labels(self, urls):
         return [self.all_labels[axis].loc[urls] for axis in self.axes]
@@ -62,6 +65,8 @@ class UCBRecSys():
                 return key 
 
         ucb_values = {key: bound[1] for key, bound in self.get_confidence_bounds(axis).items()}
+        # help print out what the current ucb selections are
+        print(sorted(ucb_values.items(), key = lambda x: -x[1]))
 
         # return arm with largest ucb
         max_ = max(ucb_values.values())
@@ -71,6 +76,12 @@ class UCBRecSys():
 
     # update our arms
     def update_counts(self, url, increment = 1):
+        # add or remove to url set
+        if increment > 0:
+            self.urls.add(url)
+        else:
+            self.urls.remove(url)
+
         for axis in self.axes:
             for key, val in self.all_labels[axis].loc[url].items():
                 if val == 1:
@@ -93,28 +104,46 @@ class UCBRecSys():
     # based on the selected key arm and axis, pick a random url
     def get_random_url(self, key_dict):
         # pick a random axis to select url
-        axis = random.choice(self.axes)
-        label_df = self.all_labels[axis]
-        key = key_dict[axis]
-        key_urls = set(label_df[label_df[key] == 1].index)
+
+        filtered_urls = None
+        for axis in self.axes:
+            label_df = self.all_labels[axis]
+            key = key_dict[axis]
+            key_urls = set(label_df[label_df[key] == 1].index) - self.urls
+            if filtered_urls is None:
+                filtered_urls = key_urls
+            else:
+                filtered_urls &= key_urls 
 
         # sample a random url from this selected list
-        return random.choice(list(key_urls))
+        if len(filtered_urls) > 1:
+            print(f'key dict is {key_dict}')
+            return random.choice(list(filtered_urls))
+        else:
+            axis = random.choice(self.axes)
+            label_df = self.all_labels[axis]
+            key = key_dict[axis]
+            print('axis is {}, key is {}'.format(axis, key))
+            key_urls = set(label_df[label_df[key] == 1].index) - self.urls
+            return random.choice(list(key_urls))
 
     # randomly sample some urls and image paths
-    def sample_urls(self, num_samples = 4, num_random = 1):
-        keys = []
+    def sample_urls(self, num_samples = 4, num_random = 0):
+        keys, urls = [], []
 
         # select how many random and how many greedy
         num_greedy = num_samples - num_random
 
-        # select random key and random url
+        # select random keys and then get random url
         for _ in range(num_random):
             key_dict = {}
             for axis in self.axes:
                 key = random.choice(self.all_labels[axis].columns)
                 key_dict[axis] = key
             keys.append(key_dict)
+            url = self.get_random_url(key_dict)
+            self.update_counts(url)
+            urls.append(url)
 
         # select random urls based on meats based on ucb, update with reward 1
         for _ in range(num_greedy):
@@ -123,18 +152,19 @@ class UCBRecSys():
                 key = self.select_axis_arm(axis)
                 key_dict[axis] = key
             keys.append(key_dict)
-
-        urls = []
-        for key_dict in keys:
             url = self.get_random_url(key_dict)
             self.update_counts(url)
             urls.append(url)
+
+        # random.shuffle(urls)
         print(keys)
 
         titles = self.url_index_mapping.loc[urls]['title'].values
+        total_time = self.url_index_mapping.loc[urls]['total_time'].values
+        num_ingredients = self.url_index_mapping.loc[urls]['num_ingredients'].values
         image_paths = self.get_image_paths(urls)
         
-        return urls, titles, image_paths
+        return urls, titles, image_paths, total_time, num_ingredients
     
     # plot 10 images given image paths
     def plot_images(self, image_paths):
@@ -156,25 +186,49 @@ class UCBRecSys():
     def get_image_paths(self, urls):
         return [f'images_resized/image_{index}.jpg' for index in self.url_index_mapping.loc[urls]['index']]
 
-    # return a dictionary mapping top 10 urls and title and image index
-    def get_recs(self, urls, value_cutoff = 0.5):
-        # get filter based on selection criterion, and then find nearest neighbors
+    def unwrap_tuple(self, tup):
+        d = {}
+        for i, axis in enumerate(self.axes):
+            d[axis] = [tup[i]]
+        return d
+
+    def string_dict(self, d):
+        l = []
+        for axis in self.axes:
+            l.append(d[axis][0])
+        return ' '.join(l)
+
+    def get_most_common_labels(self, urls):
+        import itertools
+
+        self.label_counts = Counter()
+        for url in urls:
+            axis_keys = []
+            for axis in self.axes:
+                label_df = self.all_labels[axis] 
+                keys = [key for key, val in label_df.loc[url].items() if val == 1]
+                axis_keys.append(keys)
+
+            for tup in itertools.product(*axis_keys):
+                self.label_counts[tup] += 1
+        print(self.label_counts)
+        
+        most_common_labels = self.label_counts.most_common(4)
+        return [self.unwrap_tuple(tup) for tup, count in most_common_labels if count >= 4]
+
+    def get_recs_filter(self, urls, all_filters, num_recs = 10):
         filtered_urls = None
-
-        self.all_filters = {}
-        for axis in self.axes:  
+        for axis in self.axes:
+            filters = all_filters[axis]
             filtered_urls_axis = set()
-            conf_df = self.get_value_df(axis)
+            label_df = self.all_labels[axis]
 
-            # pick the ones with the value cutoff
-            filters = conf_df[conf_df >= value_cutoff].index
-            self.all_filters[axis] = filters
-            print(f'filters are {filters}')
-
-            # union all relevant keys
-            for key in filters:
-                label_df = self.all_labels[axis]
-                filtered_urls_axis |= set(label_df[label_df[key] == 1].index)
+            # if at least 1 filter, then find the relevant keys if len(filters) > 0: # union all relevant keys
+            if len(filters) > 0:
+                for key in filters:
+                    filtered_urls_axis |= set(label_df[label_df[key] == 1].index)
+            else:
+                filtered_urls_axis = set(label_df.index)
 
             # intersect the axes
             if filtered_urls is None:
@@ -185,10 +239,34 @@ class UCBRecSys():
         # restrict to urls in embeddings df
         filtered_urls &= set(self.embeddings_df_scaled.index)
 
-        _, rec_urls = get_recs_knn_average(self.embeddings_df_scaled.loc[filtered_urls], urls)
+        _, rec_urls = get_recs_knn_average(self.embeddings_df_scaled, urls, filtered_urls, num_recs)
         rec_titles = self.url_index_mapping.loc[rec_urls]['title'].values
         rec_image_paths = self.get_image_paths(rec_urls)
+
         return rec_urls, rec_titles, rec_image_paths
+
+    # return a dictionary mapping top 10 urls and title and image index
+    def get_recs(self, urls, value_cutoff = 0.6):
+        # get filter based on selection criterion, and then find nearest neighbors
+        all_filters = {}
+
+        for axis in self.axes:  
+            conf_df = self.get_value_df(axis)
+            # pick the ones with the value cutoff
+            filters = conf_df[conf_df >= value_cutoff].index
+            all_filters[axis] = filters
+
+        print(all_filters)
+        return self.get_recs_filter(urls, all_filters)
+
+    def get_recs_most_common(self, urls):
+        d = {}
+        all_filters_list = self.get_most_common_labels(urls)
+        for all_filters in all_filters_list:
+            rec_urls, rec_titles, rec_image_paths = self.get_recs_filter(urls, all_filters, 5)
+            # if len(rec_urls) == 10:
+            d[self.string_dict(all_filters)] = (rec_urls, rec_titles, rec_image_paths)
+        return d
 
 def main():
     rec_sys = UCBRecSys()
