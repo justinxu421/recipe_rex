@@ -26,7 +26,7 @@ def get_df_indices(df, urls):
     return indices
 
 # find the nearest neighbors to the average of the inputs
-def get_recs_knn_average(df, urls, num_neighbors = 10):
+def get_recs_knn_average(df, urls, filtered_urls = set(), num_neighbors = 10):
     indices = get_df_indices(df, urls)
     
     # build knn model
@@ -34,10 +34,18 @@ def get_recs_knn_average(df, urls, num_neighbors = 10):
 
     # get x based on the index
     x = df.iloc[indices].to_numpy().mean(axis = 0).reshape((1, -1))
-    dists, neighbors = model_knn.kneighbors(x, num_neighbors)
+    dists, neighbors = model_knn.kneighbors(x, len(df))
+
+    # find neighbors until we hit 10
+    valid_neighbors = []
+    for n in neighbors[0]:
+        if df.index[n] in filtered_urls and df.index[n] not in urls:
+            valid_neighbors.append(n)
+        if len(valid_neighbors) == num_neighbors:
+            break
     
     # return urls, the distances, and the nearest neighbors
-    return df.index[indices], df.index[neighbors[0]]
+    return df.index[indices], df.index[valid_neighbors]
 
 # generate recs by candidate generation -> ranking
 def get_recs_knn(df, urls, num_neighbors = 10):  

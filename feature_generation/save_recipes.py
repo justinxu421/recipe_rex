@@ -84,12 +84,19 @@ def agg_data(filter_ = False):
     return process_dataset_list(dfs), process_dataset_list(dessert_dfs), \
         process_dataset_list(sauces_dfs), process_dataset_list(sides_dfs)
 
+def transform_features(dfs_nutrient):
+    dfs_nutrient.loc[dfs_nutrient['total_time'] > 120, 'total_time'] = 120
+    dfs_nutrient['num_ingredients'] = dfs_nutrient['ingredients'].apply(len)
+    return dfs_nutrient
+
 def save_dfs(dfs_nutrient, folder, name):
     if len(dfs_nutrient) > 0:
 
         # save indices based on all mapping
         if folder == 'all':
-            url_index_mapping = dfs_nutrient[['url', 'title', 'index']]
+            dfs_nutrient = transform_features(dfs_nutrient)
+            url_index_mapping = dfs_nutrient[['url', 'title', 'index', 'total_time', 'num_ingredients']]
+            url_index_mapping['title'] = url_index_mapping['title'].str.capitalize()
             print(f'saving to clean_data/{folder}/{name}_url_index_mapping.csv\n')
             url_index_mapping.to_csv(f'../clean_data/{folder}/{name}_url_index_mapping.csv', index = False)
         # if filter, then read from the all_url mapping we just saved
