@@ -170,7 +170,7 @@ def write_recs(title, rec_urls, rec_titles, rec_image_paths):
 
 # result screen image rendering
 def display_results(state):
-    state.header.header('You Might Like')
+    state.header.header('Recipes you might like')
 
     # reset state buttons
     if state.buttons:

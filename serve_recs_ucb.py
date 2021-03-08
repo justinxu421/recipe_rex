@@ -214,9 +214,9 @@ class UCBRecSys():
         print(self.label_counts)
         
         most_common_labels = self.label_counts.most_common(4)
-        return [self.unwrap_tuple(tup) for tup, count in most_common_labels if count >= 2]
+        return [self.unwrap_tuple(tup) for tup, count in most_common_labels if count >= 4]
 
-    def get_recs_filter(self, urls, all_filters):
+    def get_recs_filter(self, urls, all_filters, num_recs = 10):
         filtered_urls = None
         for axis in self.axes:
             filters = all_filters[axis]
@@ -239,7 +239,7 @@ class UCBRecSys():
         # restrict to urls in embeddings df
         filtered_urls &= set(self.embeddings_df_scaled.index)
 
-        _, rec_urls = get_recs_knn_average(self.embeddings_df_scaled, urls, filtered_urls)
+        _, rec_urls = get_recs_knn_average(self.embeddings_df_scaled, urls, filtered_urls, num_recs)
         rec_titles = self.url_index_mapping.loc[rec_urls]['title'].values
         rec_image_paths = self.get_image_paths(rec_urls)
 
@@ -263,7 +263,7 @@ class UCBRecSys():
         d = {}
         all_filters_list = self.get_most_common_labels(urls)
         for all_filters in all_filters_list:
-            rec_urls, rec_titles, rec_image_paths = self.get_recs_filter(urls, all_filters)
+            rec_urls, rec_titles, rec_image_paths = self.get_recs_filter(urls, all_filters, 5)
             # if len(rec_urls) == 10:
             d[self.string_dict(all_filters)] = (rec_urls, rec_titles, rec_image_paths)
         return d
