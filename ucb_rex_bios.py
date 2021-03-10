@@ -101,7 +101,7 @@ def update_selections(state):
         prev_index = state.index - 1
         params = state.all_params[state.index-1]
 
-        urls, titles, pics = params
+        urls, titles, pics, total_time, num_ingredients = params
 
         # we also need to upate state if we have previously selected
         prev_url_sel = state.url_selections[prev_index]
@@ -125,13 +125,29 @@ def display_choices(state):
     urls = params[0]
     titles = params[1]
     pics = params[2]
+    total_times = params[3]
+    
+    meat_labels = state.rec_sys.get_labels(state.all_params[state.index][0])[0]
+    starch_labels = state.rec_sys.get_labels(state.all_params[state.index][0])[1]
     
     for i in range(4):
         with state.cols[i]:
+            
             # state.buttons[i].button('test')
             st.image([pics[i]], use_column_width=True)
             st.write("{}".format(titles[i].capitalize()))
-            display_bio(state)
+            meat_labels_included = []
+            starch_labels_included = []
+            
+            for key, val in meat_labels.iloc[i].items():
+                if val == 1:
+                    meat_labels_included.append(str(key))
+
+            for key, val in starch_labels.iloc[i].items():
+                if val == 1:
+                    starch_labels_included.append(str(key))
+            
+            display_bio(total_times[i], meat_labels_included, starch_labels_included)
 
 # result screen image rendering
 def display_results(state):
@@ -261,7 +277,7 @@ def get_labels_as_tags(labels, dictionary, index_of_value, is_annotate, label_ca
 
 # https://github.com/tvst/st-annotated-text
 # https://docs.streamlit.io/en/stable/develop_streamlit_components.html
-def display_bio(state):        
+def display_bio(total_time, meat_labels, starch_labels):        
     
     # values = ['color' (if wanted to highlight), 'emoji']
     meat_tag_dict = {
@@ -279,11 +295,9 @@ def display_bio(state):
         'soup':['#ff0', '🥣']
     }
     
-    total_times = [10, 25, 50, 15]
-    
     tags_string = ""
-#             tags_string += get_labels_as_tags(meat_labels, meat_tag_dict, 1, False)
-#             tags_string += get_labels_as_tags(starch_labels, starch_tag_dict, 1, False)
+    tags_string += get_labels_as_tags(meat_labels, meat_tag_dict, 1, False)
+    tags_string += get_labels_as_tags(starch_labels, starch_tag_dict, 1, False)
 
     # display bio
     components.html(
@@ -303,7 +317,7 @@ def display_bio(state):
             </div>
             <div id="collapseOne" class="collapse show" aria-labelledby="headingOne" data-parent="#accordion">
               <div class="card-body">
-                <b>⏱️: </b> {total_times[i]} min<br /> <br /> 
+                <b>⏱️: </b> {total_time} min<br /> <br /> 
                 <b>Tags</b> <br /> {tags_string} <br /> <br />
               </div>
             </div>
