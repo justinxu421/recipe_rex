@@ -1,4 +1,5 @@
 *.ipynb_checkpoints/*
+*.DS_Store
 feature_generation/.ipynb_checkpoints/*
 clean_data/.ipynb_checkpoints/*
 __pycache__/

@@ -159,7 +159,6 @@ def get_gram_embedding(gram, ft):
     embeddings = [ft[word] for word in gram.split(" ")]
     embedding = np.mean(embeddings, axis=0) 
 
-    assert embedding.shape == (300,)
     return embedding
 
 def load_fasttext_model(embedding_dim=300):
@@ -243,7 +242,7 @@ def get_sentence_embeddings(
     # Get sentence embeddings
     sentence_embeddings = {}
     for url, raw_ingrs in zip(dataset.url, dataset.ingredients):
-        print(url)
+#         print(url)
         grams = extract_ing_grams(raw_ingrs, all_ing_grams)
         
         gram_embeddings = {
@@ -280,7 +279,11 @@ def one_hot_encode_raw_ingrs(ingrs, gram2idx):
     
     return label
 
-def featurize_ingredients(dataset: pd.DataFrame, save = False):
+def featurize_ingredients(
+    dataset: pd.DataFrame, 
+    save = False, 
+    embedding_dim=300,
+):
 #    # One hot encoding
 #     _, _, gram2idx = choose_top_grams(dataset, exclude_non_ing=True) 
 
@@ -303,10 +306,10 @@ def featurize_ingredients(dataset: pd.DataFrame, save = False):
     
     assert len(ing_gram_cts) == len(ing_unigram_cts) + len(ing_bigram_cts)
     
-    ing_df = get_sentence_embeddings(dataset, ing_gram_cts)
+    ing_df = get_sentence_embeddings(dataset, ing_gram_cts, embedding_dim)
 
     if save:
-        print('saving to clean_data/ing_features.csv\n')
-        ing_df.to_csv('../clean_data/ing_features.csv')
+        print('saving to clean_data/all/ing_features.csv\n')
+        ing_df.to_csv('../clean_data/all/ing_features.csv')
 
     return ing_df
