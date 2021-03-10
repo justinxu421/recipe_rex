@@ -10,13 +10,35 @@ import pandas as pd
 import random
 import streamlit as st
 import altair as alt
+import streamlit.components.v1 as components
+from annotated_text import annotated_text, annotation
 
 import sys
 sys.path.append('../')
 from serve_recs_ucb import *
 from serve_recs import *
 
-debug = True
+debug = False
+
+# values = ['color' (if wanted to highlight), 'emoji']
+meat_tag_dict = {
+    'poultry':['#8ef', '🍗'],
+    'beef':['#faa', '🥩'],
+    'pork':['#afa', '🐖'],
+    'fish':['#fea', '🐟'],
+    'seafood':['#8ef', '🦐'],
+    'veg':['#ff0', '🥕'],
+}
+
+starch_tag_dict = {
+    'noodle':['#8ef', '🍜'],
+    'rice':['#afa', '🍚'],
+    'soup':['#ff0', '🥣'],
+    'stew':['#fe0', '🍲'],
+    'none':['#fa0', ''],
+}
+
+cook_time_emoji = '⏱️'
 
 # method to get 4 random images
 def get_images(rec_sys, idx):
@@ -57,11 +79,12 @@ def init_placeholders(state):
     state.progress_bar = st.empty()
     state.error_message = st.empty()
     state.buttons = [] 
-    state.cols = st.beta_columns(4)
-    for i in range(4):
+    num_cols = 4
+    state.cols = st.beta_columns(num_cols)
+    for i in range(num_cols):
         with state.cols[i]:
             state.buttons.append(st.empty())
-
+        
 def selection_buttons(state):
     # create columns if second to last page 
     state.sel = -1
@@ -140,16 +163,29 @@ def display_choices(state):
             else:
                 st.write("{}".format(titles[i]))
 
-            st.write(f'total time: {total_time[i]}')
-            st.write(f'num ingredients: {num_ingredients[i]}')
+#             st.write(f'total time: {total_time[i]}')
+#             st.write(f'num ingredients: {num_ingredients[i]}')
 
+#             for key, val in meat_labels.iloc[i].items():
+#                 if val == 1:
+#                     st.text(key)
+
+#             for key, val in starch_labels.iloc[i].items():
+#                 if val == 1:
+#                     st.text(key)
+                    
+            meat_labels_included = []
+            starch_labels_included = []
+            
             for key, val in meat_labels.iloc[i].items():
                 if val == 1:
-                    st.text(key)
+                    meat_labels_included.append(str(key))
 
             for key, val in starch_labels.iloc[i].items():
                 if val == 1:
-                    st.text(key)
+                    starch_labels_included.append(str(key))
+            
+            display_bio(total_time[i], meat_labels_included, starch_labels_included, num_ingredients[i])
 
 def write_recs(title, rec_urls, rec_titles, rec_image_paths):
     st.subheader(title)
@@ -280,6 +316,96 @@ def render_images(state, debug = debug):
             st.write('totals')
             st.write(state.rec_sys.totals)
         st.write(state.selections[state.filter_sel])
+        
+def get_labels_as_tags(labels, dictionary, index_of_value, is_annotate, label_category = "none"):
+    tags_string = ""
+    
+    for label in labels:
+        if (is_annotate):
+            tags_string += str(annotation(label, label_category, background=(dictionary[label])[index_of_value]))
+        else:
+            tags_string += str((dictionary[label])[index_of_value])
+    
+    return tags_string
+        
+# https://github.com/tvst/st-annotated-text
+# https://docs.streamlit.io/en/stable/develop_streamlit_components.html
+def display_bio(total_time, meat_labels, starch_labels, num_ingredients):        
+    
+    tags_string = ""
+    tags_string += get_labels_as_tags(meat_labels, meat_tag_dict, 1, False)
+    tags_string += get_labels_as_tags(starch_labels, starch_tag_dict, 1, False)
+
+    # display bio
+    components.html(
+        f"""
+        <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
+        <script src="https://code.jquery.com/jquery-3.2.1.slim.min.js" integrity="sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN" crossorigin="anonymous"></script>
+        <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js" integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl" crossorigin="anonymous"></script>
+
+        <div id="accordion">
+          <div class="card">
+            <div class="card-header" id="headingOne">
+              <h5 class="mb-0">
+                <button class="btn btn-link" data-toggle="collapse" data-target="#collapseOne" aria-expanded="true" aria-controls="collapseOne">
+                More Info
+                </button>
+              </h5>
+            </div>
+            <div id="collapseOne" class="collapse show" aria-labelledby="headingOne" data-parent="#accordion">
+              <div class="card-body">
+                <b>{cook_time_emoji}: </b> {total_time} min<br /> 
+                <b> Ingredients: </b> {num_ingredients} <br />
+                <b>Tags: </b> {tags_string} <br /> 
+              </div>
+            </div>
+          </div>
+        </div>
+        """,
+        height=220,
+        scrolling=True
+    )
+    
+    
+def render_legend():
+    emoji_index = 1
+    components.html(
+        f"""
+        <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
+        <script src="https://code.jquery.com/jquery-3.2.1.slim.min.js" integrity="sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN" crossorigin="anonymous"></script>
+        <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js" integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl" crossorigin="anonymous"></script>
+
+        <div id="accordion">
+          <div class="card">
+            <div class="card-header" id="headingOne">
+              <h5 class="mb-0">
+                <button class="btn btn-link" data-toggle="collapse" data-target="#collapseOne" aria-expanded="true" aria-controls="collapseOne">
+                Emoji Legend
+                </button>
+              </h5>
+            </div>
+            <div id="collapseOne" class="collapse show" aria-labelledby="headingOne" data-parent="#accordion">
+              <div class="card-body">
+               <b> {cook_time_emoji}: </b> cook time <br /> 
+                <b> {meat_tag_dict['poultry'][emoji_index]}: </b> poultry<br /> 
+                <b> {meat_tag_dict['pork'][emoji_index]}: </b> pork <br />
+                <b> {meat_tag_dict['beef'][emoji_index]}: </b> beef <br /> 
+                <b>{meat_tag_dict['fish'][emoji_index]}: </b> fish <br /> 
+                <b>{meat_tag_dict['seafood'][emoji_index]}: </b> seafood <br /> 
+                <b>{meat_tag_dict['veg'][emoji_index]}: </b> vegetarian <br /> 
+                <b>{starch_tag_dict['noodle'][emoji_index]}: </b> noodle <br /> 
+                <b>{starch_tag_dict['rice'][emoji_index]}: </b> rice <br /> 
+                <b>{starch_tag_dict['soup'][emoji_index]}: </b> soup <br /> 
+                <b>{starch_tag_dict['stew'][emoji_index]}: </b> stew <br /> 
+              </div>
+            </div>
+          </div>
+        </div>
+        """,
+        height=1000,
+        scrolling=True
+    )
+    
 
 def render():
     num_pages = 10
@@ -317,5 +443,6 @@ def render():
 
     render_buttons(state)
     render_images(state)
+    render_legend()
 
 render()
