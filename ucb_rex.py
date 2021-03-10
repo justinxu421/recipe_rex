@@ -283,34 +283,35 @@ def render_images(state, debug = debug):
     starch_vals = state.rec_sys.get_value_df('starch')
 
     if state.index > 0:
-        with meat: 
-            meat_vals = meat_vals.reset_index().rename(columns = {'index': 'meat', 'val': 'score'})
-            c = alt.Chart(meat_vals).mark_bar().encode(
-                x = 'score:Q',
-                y = 'meat:O',
-                color = 'meat'
-            # ).configure_mark(
-            #     color = 'meat'
-            ).properties(height=400
-            ).configure_axis(
-                labelFontSize=14,
-                titleFontSize=14
-            )
-            st.altair_chart(c, use_container_width=True)
-        with starch:
-            starch_vals = starch_vals.reset_index().rename(columns = {'index': 'starch', 'val': 'score'})
-            c = alt.Chart(starch_vals).mark_bar().encode(
-                x = 'score:Q',
-                y = 'starch:O',
-                color = 'starch',
-            # ).configure_mark(
-            #     color = 'starch'
-            ).properties(height=400
-            ).configure_axis(
-                labelFontSize=14,
-                titleFontSize=14
-            )
-            st.altair_chart(c, use_container_width=True)
+        if state.filter_sel == 'main':
+            with meat: 
+                meat_vals = meat_vals.reset_index().rename(columns = {'index': 'meat', 'val': 'score'})
+                c = alt.Chart(meat_vals).mark_bar().encode(
+                    x = 'score:Q',
+                    y = 'meat:O',
+                    color = 'meat'
+                # ).configure_mark(
+                #     color = 'meat'
+                ).properties(height=400
+                ).configure_axis(
+                    labelFontSize=14,
+                    titleFontSize=14
+                )
+                st.altair_chart(c, use_container_width=True)
+            with starch:
+                starch_vals = starch_vals.reset_index().rename(columns = {'index': 'starch', 'val': 'score'})
+                c = alt.Chart(starch_vals).mark_bar().encode(
+                    x = 'score:Q',
+                    y = 'starch:O',
+                    color = 'starch',
+                # ).configure_mark(
+                #     color = 'starch'
+                ).properties(height=400
+                ).configure_axis(
+                    labelFontSize=14,
+                    titleFontSize=14
+                )
+                st.altair_chart(c, use_container_width=True)
 
     if debug:
         st.write(f"index: {state.index}")
