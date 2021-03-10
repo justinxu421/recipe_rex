@@ -9,7 +9,7 @@ from sklearn.preprocessing import StandardScaler
 # file_name = 'embeddings_main_filter'
 # folder = 'mains'
 
-def compress(ing_df, components = 5):
+def compress(ing_df, components = 10):
     pca = PCA(components)
     ing_pca = pca.fit_transform(ing_df.to_numpy())
     ing_pca_df = pd.DataFrame(ing_pca, index = ing_df.index)
@@ -54,8 +54,6 @@ def get_embeddings(all_dfs_nutrient, folder, prefix, load = True, save = False):
 
 # load nutrients and save embeddings
 def main(folder, prefix):
-    # all_dfs_nutrient = pd.read_csv(f'../clean_data/{folder}/all_recipes_nutrient.csv')
-    # all_dfs_nutrient = pd.read_csv(f'../clean_data/{folder}/mains_filter_recipes_nutrient.csv')
     all_dfs_nutrient = pd.read_csv(f'../clean_data/{folder}/{prefix}_recipes_nutrient.csv')
     
     # load and save nutrient df

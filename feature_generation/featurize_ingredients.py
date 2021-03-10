@@ -257,7 +257,7 @@ def get_sentence_embeddings(
         )
     
     # Save to dataframe
-    return pd.DataFrame.from_dict(sentence_embeddings, orient="index")
+    return pd.DataFrame.from_dict(sentence_embeddings, orient="index").reset_index().rename(columns={'index':'url'})
 
 
 def one_hot_encode_raw_ingrs(ingrs, gram2idx):
@@ -282,6 +282,7 @@ def one_hot_encode_raw_ingrs(ingrs, gram2idx):
 def featurize_ingredients(
     dataset: pd.DataFrame, 
     save = False, 
+    folder = 'all',
     embedding_dim=300,
 ):
 #    # One hot encoding
@@ -309,7 +310,7 @@ def featurize_ingredients(
     ing_df = get_sentence_embeddings(dataset, ing_gram_cts, embedding_dim)
 
     if save:
-        print('saving to clean_data/all/ing_features.csv\n')
-        ing_df.to_csv('../clean_data/all/ing_features.csv')
+        print(f'saving to clean_data/{folder}/ing_features.csv\n')
+        ing_df.to_csv(f'../clean_data/{folder}/ing_features.csv', index = False)
 
     return ing_df
