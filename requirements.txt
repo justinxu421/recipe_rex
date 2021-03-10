@@ -6,6 +6,7 @@ pandas
 jupyterlab 
 ipywidgets
 pigeonXT-jupyter
+st-annotated-text
 
 # To use data labeling notebook, do this first
 # jupyter nbextension enable --py widgetsnbextension
