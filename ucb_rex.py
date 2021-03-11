@@ -153,6 +153,8 @@ def display_choices(state):
     meat_labels = state.rec_sys.get_labels(state.all_params[state.filter_sel][state.index][0])[0]
     starch_labels = state.rec_sys.get_labels(state.all_params[state.filter_sel][state.index][0])[1]
 
+    meat_labels_dict = {}
+    starch_labels_dict = {}
     for i in range(4):
         with state.cols[i]:
             # state.buttons[i].button('test')
@@ -161,7 +163,8 @@ def display_choices(state):
             if debug:
                 st.write(f"[{titles[i]}]({urls[i]})")
             else:
-                st.write("{}".format(titles[i]))
+                st.write('{}'.format(titles[i]))
+
 
 #             st.write(f'total time: {total_time[i]}')
 #             st.write(f'num ingredients: {num_ingredients[i]}')
@@ -184,8 +187,14 @@ def display_choices(state):
             for key, val in starch_labels.iloc[i].items():
                 if val == 1:
                     starch_labels_included.append(str(key))
-            
-            display_bio(total_time[i], meat_labels_included, starch_labels_included, num_ingredients[i])
+
+            meat_labels_dict[i] = meat_labels_included
+            starch_labels_dict[i] = starch_labels_included
+    
+    bio = st.beta_columns(4) 
+    for i in range(4):
+        with bio[i]:
+            display_bio(total_time[i], meat_labels_dict[i], starch_labels_dict[i], num_ingredients[i])
 
 def write_recs(title, rec_urls, rec_titles, rec_image_paths):
     st.subheader(title)
@@ -275,24 +284,35 @@ def render_images(state, debug = debug):
     starch_vals = state.rec_sys.get_value_df('starch')
 
     if state.index > 0:
-        with meat: 
-            meat_vals = meat_vals.reset_index().rename({'index': 'meat'})
-            c = alt.Chart(meat_vals).mark_bar().encode(
-                x = 'index',
-                y = 'val',
-            ).configure_mark(
-                color = 'green'
-            )
-            st.altair_chart(c, use_container_width=True)
-        with starch:
-            starch_vals = starch_vals.reset_index().rename({'index': 'starch'})
-            c = alt.Chart(starch_vals).mark_bar().encode(
-                x = 'index',
-                y = 'val',
-            ).configure_mark(
-                color = 'blue'
-            )
-            st.altair_chart(c, use_container_width=True)
+        if state.filter_sel == 'main':
+            with meat: 
+                meat_vals = meat_vals.reset_index().rename(columns = {'index': 'meat', 'val': 'score'})
+                c = alt.Chart(meat_vals).mark_bar().encode(
+                    x = 'score:Q',
+                    y = 'meat:O',
+                    color = 'meat'
+                # ).configure_mark(
+                #     color = 'meat'
+                ).properties(height=400
+                ).configure_axis(
+                    labelFontSize=14,
+                    titleFontSize=14
+                )
+                st.altair_chart(c, use_container_width=True)
+            with starch:
+                starch_vals = starch_vals.reset_index().rename(columns = {'index': 'starch', 'val': 'score'})
+                c = alt.Chart(starch_vals).mark_bar().encode(
+                    x = 'score:Q',
+                    y = 'starch:O',
+                    color = 'starch',
+                # ).configure_mark(
+                #     color = 'starch'
+                ).properties(height=400
+                ).configure_axis(
+                    labelFontSize=14,
+                    titleFontSize=14
+                )
+                st.altair_chart(c, use_container_width=True)
 
     if debug:
         st.write(f"index: {state.index}")
@@ -413,6 +433,8 @@ def render_help_expander():
 
 
 def render():
+    st.set_page_config(layout="centered")
+
     num_pages = 10
 
     # filters to use
