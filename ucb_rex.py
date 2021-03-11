@@ -190,6 +190,7 @@ def display_choices(state):
 def write_recs(title, rec_urls, rec_titles, rec_image_paths):
     st.subheader(title)
 
+    
     # 2 columns for 10 recs 
     row1 = st.beta_columns(5)
     row2 = st.beta_columns(5)
@@ -201,8 +202,8 @@ def write_recs(title, rec_urls, rec_titles, rec_image_paths):
                 st.write(f"[{rec_titles[i]}]({rec_urls[i]})")
         with row2[i]:
             if 5+i < len(rec_urls):
-               st.image([rec_image_paths[5+i]], use_column_width=True)
-               st.write(f"[{rec_titles[5+i]}]({rec_urls[5+i]})")
+                st.image([rec_image_paths[5+i]], use_column_width=True)
+                st.write(f"[{rec_titles[5+i]}]({rec_urls[5+i]})")
 
 # result screen image rendering
 def display_results(state):
@@ -345,14 +346,14 @@ def display_bio(total_time, meat_labels, starch_labels, num_ingredients):
 
         <div id="accordion">
           <div class="card">
-            <div class="card-header" id="headingOne">
+            <div class="card-header" id="headingTwo">
               <h5 class="mb-0">
-                <button class="btn btn-link" data-toggle="collapse" data-target="#collapseOne" aria-expanded="true" aria-controls="collapseOne">
+                <button class="btn btn-link collapsed" data-toggle="collapse" data-target="#collapseTwo" aria-expanded="false" aria-controls="collapseTwo">
                 More Info
                 </button>
               </h5>
             </div>
-            <div id="collapseOne" class="collapse show" aria-labelledby="headingOne" data-parent="#accordion">
+            <div id="collapseTwo" class="collapse" aria-labelledby="headingTwo" data-parent="#accordion">
               <div class="card-body">
                 <b>{cook_time_emoji}: </b> {total_time} min<br /> 
                 <b> Ingredients: </b> {num_ingredients} <br />
@@ -366,46 +367,50 @@ def display_bio(total_time, meat_labels, starch_labels, num_ingredients):
         scrolling=True
     )
     
-    
-def render_legend():
-    emoji_index = 1
-    components.html(
-        f"""
-        <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
-        <script src="https://code.jquery.com/jquery-3.2.1.slim.min.js" integrity="sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN" crossorigin="anonymous"></script>
-        <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js" integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl" crossorigin="anonymous"></script>
+def render_help_expander():
+    with st.sidebar.beta_expander("Help"):
+        st.markdown("""
+                    ### 🥩🥕🍜 Welcome 🥩🥕🍜 
+                    
+                    We are your personal recommendation system! Here's how it works:
+                    
+                    1. Choose the "main", "dessert", or "side" category under "Filter selection"
+                    1. Choose your favorite recipe by clicking one of the "Recipe" buttons.
+                        1. See the "More Info" dropdown for a quick biography of the recipe!
+                        1. Click "Refresh" if you don't see any recipes you ❤️ 
+                    1. Repeat (you'll choose 10 recipes total)
+                    1. You'll reach our "Recipes you might like" page with 10 of the recipes we thought you might like 😋
+                    """
+                   );
+        
+        emoji_index = 1
+        st.markdown(f"""
+                    ### Legend
+                    
+                    {cook_time_emoji} cook time
+                    
+                    {meat_tag_dict['poultry'][emoji_index]} poultry
+                    
+                    {meat_tag_dict['pork'][emoji_index]} pork 
 
-        <div id="accordion">
-          <div class="card">
-            <div class="card-header" id="headingOne">
-              <h5 class="mb-0">
-                <button class="btn btn-link" data-toggle="collapse" data-target="#collapseOne" aria-expanded="true" aria-controls="collapseOne">
-                Emoji Legend
-                </button>
-              </h5>
-            </div>
-            <div id="collapseOne" class="collapse show" aria-labelledby="headingOne" data-parent="#accordion">
-              <div class="card-body">
-               <b> {cook_time_emoji}: </b> cook time <br /> 
-                <b> {meat_tag_dict['poultry'][emoji_index]}: </b> poultry<br /> 
-                <b> {meat_tag_dict['pork'][emoji_index]}: </b> pork <br />
-                <b> {meat_tag_dict['beef'][emoji_index]}: </b> beef <br /> 
-                <b>{meat_tag_dict['fish'][emoji_index]}: </b> fish <br /> 
-                <b>{meat_tag_dict['seafood'][emoji_index]}: </b> seafood <br /> 
-                <b>{meat_tag_dict['veg'][emoji_index]}: </b> vegetarian <br /> 
-                <b>{starch_tag_dict['noodle'][emoji_index]}: </b> noodle <br /> 
-                <b>{starch_tag_dict['rice'][emoji_index]}: </b> rice <br /> 
-                <b>{starch_tag_dict['soup'][emoji_index]}: </b> soup <br /> 
-                <b>{starch_tag_dict['stew'][emoji_index]}: </b> stew <br /> 
-              </div>
-            </div>
-          </div>
-        </div>
-        """,
-        height=1000,
-        scrolling=True
-    )
-    
+                    {meat_tag_dict['beef'][emoji_index]} beef  
+                    
+                    {meat_tag_dict['fish'][emoji_index]} fish
+                    
+                    {meat_tag_dict['seafood'][emoji_index]} seafood 
+                    
+                    {meat_tag_dict['veg'][emoji_index]} vegetarian 
+                    
+                    {starch_tag_dict['noodle'][emoji_index]} noodle 
+                    
+                    {starch_tag_dict['rice'][emoji_index]} rice
+                    
+                    {starch_tag_dict['soup'][emoji_index]} soup
+                    
+                    {starch_tag_dict['stew'][emoji_index]} stew 
+                    """)
+
+
 
 def render():
     num_pages = 10
@@ -441,8 +446,8 @@ def render():
     state.index = state.filter_index[state.filter_sel]
     state.rec_sys = state.rec_sys_dict[state.filter_sel]
 
+    render_help_expander()
     render_buttons(state)
     render_images(state)
-    render_legend()
 
 render()
