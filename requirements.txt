@@ -8,6 +8,7 @@ ipywidgets
 pigeonXT-jupyter
 st-annotated-text
 fasttext
+matplotlib
 
 # To use data labeling notebook, do this first
 # jupyter nbextension enable --py widgetsnbextension
