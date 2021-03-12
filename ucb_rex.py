@@ -290,7 +290,7 @@ def render_images(state, debug = debug):
                 c = alt.Chart(meat_vals).mark_bar().encode(
                     x = 'score:Q',
                     y = 'meat:O',
-                    color = 'meat',
+                    color = alt.Color('meat', legend = None)
                 ).properties(height=400
                 ).configure_axis(
                     labelFontSize=12,
@@ -302,7 +302,7 @@ def render_images(state, debug = debug):
                 c = alt.Chart(starch_vals).mark_bar().encode(
                     x = 'score:Q',
                     y = 'starch:O',
-                    color = 'starch',
+                    color = alt.Color('starch', legend = None)
                 ).properties(height=400
                 ).configure_axis(
                     labelFontSize=12,

@@ -198,7 +198,7 @@ class UCBRecSys():
             l.append(d[axis][0])
         return ' '.join(l)
 
-    def get_most_common_labels(self, urls):
+    def get_most_common_labels(self, urls, cutoff = 3):
         import itertools
 
         self.label_counts = Counter()
@@ -214,7 +214,7 @@ class UCBRecSys():
         print(self.label_counts)
         
         most_common_labels = self.label_counts.most_common(4)
-        return [self.unwrap_tuple(tup) for tup, count in most_common_labels if count >= 4]
+        return [self.unwrap_tuple(tup) for tup, count in most_common_labels if count >= cutoff]
 
     def get_recs_filter(self, urls, all_filters, num_recs = 10):
         filtered_urls = None
