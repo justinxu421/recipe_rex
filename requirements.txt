@@ -9,6 +9,7 @@ pigeonXT-jupyter
 st-annotated-text
 fasttext
 matplotlib
+sklearn
 
 # To use data labeling notebook, do this first
 # jupyter nbextension enable --py widgetsnbextension
