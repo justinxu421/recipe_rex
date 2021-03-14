@@ -128,7 +128,7 @@ class UCBRecSys():
             return random.choice(list(key_urls))
 
     # randomly sample some urls and image paths
-    def sample_urls(self, num_samples = 4, num_random = 0):
+    def sample_urls(self, num_samples = 4, num_random = 1):
         keys, urls = [], []
 
         # select how many random and how many greedy

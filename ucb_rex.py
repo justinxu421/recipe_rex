@@ -18,8 +18,6 @@ sys.path.append('../')
 from serve_recs_ucb import *
 from serve_recs import *
 
-debug = False
-
 # values = ['color' (if wanted to highlight), 'emoji']
 meat_tag_dict = {
     'poultry':['#8ef', '🍗'],
@@ -160,22 +158,10 @@ def display_choices(state):
             # state.buttons[i].button('test')
             st.image([pics[i]], use_column_width=True)
 
-            if debug:
+            if state.debug:
                 st.write(f"[{titles[i]}]({urls[i]})")
             else:
                 st.write('{}'.format(titles[i]))
-
-
-#             st.write(f'total time: {total_time[i]}')
-#             st.write(f'num ingredients: {num_ingredients[i]}')
-
-#             for key, val in meat_labels.iloc[i].items():
-#                 if val == 1:
-#                     st.text(key)
-
-#             for key, val in starch_labels.iloc[i].items():
-#                 if val == 1:
-#                     st.text(key)
                     
             meat_labels_included = []
             starch_labels_included = []
@@ -228,7 +214,7 @@ def display_results(state):
 
 
     d = state.rec_sys.get_recs_most_common(url_selections)
-    if d:
+    if state.filter_sel == 'mains' and d:
         for title, (rec_urls, rec_titles, rec_image_paths) in d.items():
             # st.write(len(rec_urls))
             write_recs(title, rec_urls, rec_titles, rec_image_paths)
@@ -237,7 +223,7 @@ def display_results(state):
         rec_urls, rec_titles, rec_image_paths = state.rec_sys.get_recs(url_selections)
         write_recs('Your final recs', rec_urls, rec_titles, rec_image_paths)
 
-    if debug:
+    if state.debug:
         st.write({' '.join(a): b for a, b in state.rec_sys.label_counts.items()})
     
     # also insert user choices 
@@ -269,7 +255,7 @@ def display_results(state):
                 st.write(f"[{title}]({url})")
 
 # render the images
-def render_images(state, debug = debug):
+def render_images(state):
     # handle the previous click
     update_selections(state)
 
@@ -310,7 +296,7 @@ def render_images(state, debug = debug):
                 )
                 st.altair_chart(c, use_container_width=True)
 
-    if debug:
+    if state.debug:
         st.write(f"index: {state.index}")
         st.write(f"selection: {state.sel}")
         st.write(state.rec_sys.urls)
@@ -448,6 +434,7 @@ def render():
     state = ss.get(rec_sys = rec_sys_main, 
          rec_sys_dict = rec_sys_dict,
          filter_sel = 'mains',
+         debug = False,
          all_params = {filter_: {idx: -1 for idx in range(num_pages)} for filter_ in filters},
          num_pages = num_pages,
          # index to indicate page number
@@ -459,6 +446,7 @@ def render():
          cols = None
      )
 
+    state.debug = st.sidebar.checkbox('debug', value = False)
     state.filter_index[state.filter_sel] = state.index
     state.filter_sel = st.sidebar.radio('Filter selection', filters)
     state.index = state.filter_index[state.filter_sel]
