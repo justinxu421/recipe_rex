@@ -129,7 +129,7 @@ def render_buttons(state):
 # update the previous entry with selection
 def update_selections(state):
     # -1 means dont do anything
-    if state.sel >= 0:
+    if state.sel >= 0 and state.index <= state.num_pages:
         prev_index = state.index - 1
         params = state.all_params[state.filter_sel][state.index-1]
 
@@ -238,6 +238,9 @@ def display_results(state):
     if state.debug:
         st.write({' '.join(a): b for a, b in state.rec_sys.label_counts.items()})
     
+#     num_chosen_in_eval = int(state.eval_percent_recs_chosen * state.eval_num_recs)
+    st.write(f'During evaluation, you chose {state.eval_percent_recs_chosen * 100:.0f}% of these.')
+    
     # also insert user choices 
     st.header('Your Choices')
 
@@ -325,7 +328,10 @@ def display_evaluation(state):
     
     # Create streamlit display grid
     st_grid = [st.beta_columns(num_cols) for _ in range(num_rows)]
-        
+    
+    if state.debug:
+        st.write(state.eval_recipes_grid)
+    
     # Display grid of recipes with checkboxes
     for i in range(num_rows):
         for j in range(num_cols):
