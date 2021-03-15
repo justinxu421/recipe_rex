@@ -8,6 +8,7 @@ from matplotlib import image
 from collections import defaultdict, Counter
 
 class UCBRecSys():
+    
     def __init__(self, folder = 'mains', file = 'mains_filter'):
         # load embeddings and index map
         self.embeddings_df_scaled = pd.read_csv(f'clean_data/{folder}/embeddings_{file}_scaled.csv', index_col = 'url')
