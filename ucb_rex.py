@@ -63,12 +63,25 @@ def top_bar(state):
                 reset_choice(state)
                 state.all_params[state.filter_sel][state.index] = get_images(state.rec_sys, state.index)
     with f:
-        if st.button('Forward') and state.index < state.num_pages:
-            # proceed if we made a selection
-            if state.selections[state.filter_sel][state.index] != (-1, -1, -1):
-                state.index = state.index + 1
-            else:
-                state.msg = "Please make a selection"
+        if st.button('Forward'):
+            if state.index <= state.num_pages-1: 
+                # we're in the explore stage
+                if state.selections[state.filter_sel][state.index] != (-1, -1, -1):
+                    # proceed if we made a selection
+                    state.index = state.index + 1
+                else:
+                    # give helpful error message
+                    state.msg = "Please make a selection"
+            elif state.index == state.num_pages:
+                # we're in the eval stage
+                num_selections = np.sum(state.eval_selected_grid)
+                num_diff = num_selections - state.eval_num_recs
+                if num_diff < 0: 
+                    state.msg = f"You selected {int(-num_diff)} too few! Please choose more."
+                elif num_diff > 0:
+                    state.msg = f"You selected {int(num_diff)} too many! Please choose less."
+                else:
+                    state.index = state.index + 1
 
 # initialize placeholders for buttons / titles
 def init_placeholders(state):
@@ -111,7 +124,7 @@ def render_buttons(state):
         selection_buttons(state)
 
     # set progress bar
-    state.progress_bar.progress(state.index / state.num_pages)
+    state.progress_bar.progress(state.index / (state.num_pages+1))
 
 # update the previous entry with selection
 def update_selections(state):
@@ -212,7 +225,6 @@ def display_results(state):
     # INSERT rec sys 
     url_selections = [x[0] for x in state.selections[state.filter_sel]]
 
-
     d = state.rec_sys.get_recs_most_common(url_selections)
     if state.filter_sel == 'mains' and d:
         for title, (rec_urls, rec_titles, rec_image_paths) in d.items():
@@ -254,15 +266,117 @@ def display_results(state):
                 st.image([image_path], use_column_width=True)
                 st.write(f"[{title}]({url})")
 
+# Shows evaluation page before results
+def display_evaluation(state):
+    # TODO: currently, the recommendations stay static even after going backwards and 
+    # selecting something new
+    
+    # reset state buttons
+    if state.buttons:
+        for i in range(4):
+            state.buttons[i].empty()
+
+    # important to store to state, so it doesn't change every page refresh
+    if not hasattr(state, "eval_recipes_grid"):
+        # Get the rec'd recipes
+        url_selections = [x[0] for x in state.selections[state.filter_sel]]
+        recs_list = []
+
+        d = state.rec_sys.get_recs_most_common(url_selections)
+        if state.filter_sel == 'mains' and d:        
+            # KNN within UCB selected meat-starch categories
+            for _, (rec_urls, rec_titles, rec_image_paths) in d.items():
+                recs_list.extend(list(zip(rec_urls, rec_titles, rec_image_paths)))
+        else:
+            # KNN over entire dataset
+            rec_urls, rec_titles, rec_image_paths = state.rec_sys.get_recs(url_selections)
+            recs_list.extend(list(zip(rec_urls, rec_titles, rec_image_paths)))
+        
+        state.eval_num_recs = len(recs_list)
+        
+        # Get the random recipes
+        num_randoms = len(recs_list)
+        rand_urls, rand_titles, rand_image_paths, _, _ = state.rec_sys.sample_urls(
+            num_samples=num_randoms,
+            num_random=num_randoms,
+            is_not_eval=False
+        ) 
+        state.eval_random_recipes = list(zip(rand_urls, rand_titles, rand_image_paths))
+
+        # Shuffle recommendations and randoms, then assign each into a recipe grid
+        # Tuple format: [is_rec, url, title, path], is_rec = 0/1 (false, true)
+        recipes_together = np.array([[1, *rec] for rec in recs_list] + [[0, *rand] for rand in state.eval_random_recipes])
+        np.random.shuffle(recipes_together)
+
+        num_cols = 5 # FIXME hardcoded default num columns
+        num_rows = len(recipes_together) // num_cols
+        size_tuple = len(recipes_together[0])
+        state.eval_recipes_grid = recipes_together.reshape(num_rows, num_cols, size_tuple)
+        
+        # Create selections grid
+        state.eval_selected_grid = np.zeros((num_rows, num_cols))
+        
+    else:
+        # initialize for the grid
+        num_rows, num_cols, _ = state.eval_recipes_grid.shape
+    
+    state.header.header(f'Evaluate us by choosing your top {state.eval_num_recs} recipes')
+    state.error_message.write(state.msg)
+    
+    # Create streamlit display grid
+    st_grid = [st.beta_columns(num_cols) for _ in range(num_rows)]
+        
+    # Display grid of recipes with checkboxes
+    for i in range(num_rows):
+        for j in range(num_cols):
+            _, _, title, image_path = state.eval_recipes_grid[i,j]
+            
+            with st_grid[i][j]:
+                st.image([image_path], use_column_width=True)
+                curr_selection = state.eval_selected_grid[i][j] # ensures checkbox stays check if go back then forward to this page
+                state.eval_selected_grid[i][j] = st.checkbox(title, curr_selection)
+    
+    # Get % recommendations chosen and save in state
+    select_idxs = [[],[]]
+    for i in range(num_rows): 
+        for j in range(num_cols):
+            if state.eval_selected_grid[i][j]:
+                select_idxs[0].append(i)
+                select_idxs[1].append(j)
+
+    selections = state.eval_recipes_grid[select_idxs]
+    state.eval_percent_recs_chosen = np.mean([int(is_rec) for is_rec, _, _, _ in selections])
+    
+    # Save urls chosen in state, for future use e.g. highlighting in the results page
+    # or using to refine the results page
+    state.eval_selected_urls = [url for _, url, _, _ in selections]
+    
+    if state.debug:
+        st.write(f"{int(state.eval_percent_recs_chosen * len(selections))} of {len(selections)} choices are recs")
+#         st.write("Shuffled recipes")
+#         st.write(recipes_together)
+#         st.write(state.eval_recipes_grid.shape)
+#         st.write(state.eval_recipes_grid)
+        st.write("Selection grid:")
+        st.write(state.eval_selected_grid)
+
+    return
+
+    
 # render the images
 def render_images(state):
     # handle the previous click
     update_selections(state)
-
-    # (num_pages) random choice screen vs, result screen
-    if state.index < state.num_pages:
+    
+    # Show explore screen, evaluate screen, or results screens
+    if state.index <= state.num_pages-1:
         display_choices(state)
+    elif state.index == state.num_pages:
+        display_evaluation(state)
     else:
+        # FIXME: currently, we have num_pages+1. cannot increment num_pages variable,
+        # since a couple other places rely on num_pages for initializing selections made.
+        # Current hack is to use num_pages+1 in progess bar as well.
         display_results(state)
 
     meat, starch = st.beta_columns(2)
@@ -270,7 +384,7 @@ def render_images(state):
     starch_vals = state.rec_sys.get_value_df('starch')
 
     if state.index > 0:
-        if state.filter_sel == 'mains':
+        if state.filter_sel == 'mains' and state.index != state.num_pages:
             with meat: 
                 meat_vals = meat_vals.reset_index().rename(columns = {'index': 'meat', 'val': 'score'})
                 c = alt.Chart(meat_vals).mark_bar().encode(

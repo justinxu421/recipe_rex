@@ -128,7 +128,7 @@ class UCBRecSys():
             return random.choice(list(key_urls))
 
     # randomly sample some urls and image paths
-    def sample_urls(self, num_samples = 4, num_random = 1):
+    def sample_urls(self, num_samples = 4, num_random = 1, is_not_eval = True):
         keys, urls = [], []
 
         # select how many random and how many greedy
@@ -142,7 +142,8 @@ class UCBRecSys():
                 key_dict[axis] = key
             keys.append(key_dict)
             url = self.get_random_url(key_dict)
-            self.update_counts(url)
+            if is_not_eval:
+                self.update_counts(url)
             urls.append(url)
 
         # select random urls based on meats based on ucb, update with reward 1
@@ -153,7 +154,8 @@ class UCBRecSys():
                 key_dict[axis] = key
             keys.append(key_dict)
             url = self.get_random_url(key_dict)
-            self.update_counts(url)
+            if is_not_eval:
+                self.update_counts(url)
             urls.append(url)
 
         # random.shuffle(urls)
