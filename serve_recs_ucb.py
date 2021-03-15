@@ -145,6 +145,8 @@ class UCBRecSys():
             url = self.get_random_url(key_dict)
             if is_not_eval:
                 self.update_counts(url)
+            else:
+                self.urls.add(url)
             urls.append(url)
 
         # select random urls based on meats based on ucb, update with reward 1
@@ -157,6 +159,8 @@ class UCBRecSys():
             url = self.get_random_url(key_dict)
             if is_not_eval:
                 self.update_counts(url)
+            else:
+                self.urls.add(url)
             urls.append(url)
 
         # random.shuffle(urls)
