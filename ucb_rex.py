@@ -290,6 +290,12 @@ def display_evaluation(state):
             # KNN within UCB selected meat-starch categories
             for _, (rec_urls, rec_titles, rec_image_paths) in d.items():
                 state.recs_list.extend(list(zip(rec_urls, rec_titles, rec_image_paths)))
+
+            # fallback behavior
+            if len(state.recs_list) == 0:
+                # KNN over entire dataset
+                rec_urls, rec_titles, rec_image_paths = state.rec_sys.get_recs(url_selections)
+
         else:
             # KNN over entire dataset
             rec_urls, rec_titles, rec_image_paths = state.rec_sys.get_recs(url_selections)
@@ -317,7 +323,6 @@ def display_evaluation(state):
 
         num_cols = 5 # FIXME hardcoded default num columns
         num_rows = (len(state.eval_recipes_grid) - 1) // num_cols + 1
-        size_tuple = len(state.eval_recipes_grid[0])
         
         # Create selections grid
         state.eval_selected_grid = [[0 for _ in range(num_cols)] for _ in range(num_rows)] 

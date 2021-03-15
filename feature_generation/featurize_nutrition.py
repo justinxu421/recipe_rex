@@ -31,7 +31,9 @@ def featurize_nutrients(all_dfs_nutrient, save = False, folder = 'all_v1'):
     df['high_fat'] = df['fatContent'].map(lambda x: filter_nutrient(x, 25))
     df['high_sodium'] = df['sodiumContent'].map(lambda x: filter_nutrient(x, 1000))
     df['high_sugar'] = df['sugarContent'].map(lambda x: filter_nutrient(x, 9))
+    # impute with mean
     df = df.set_index('url')
+    df = df.fillna(df.mean()).astype(float)
     # drop the original columns
     df = df.drop(columns = nutrient_cols)
     

@@ -270,7 +270,6 @@ class UCBRecSys():
         all_filters_list = self.get_most_common_labels(urls)
         for all_filters in all_filters_list:
             rec_urls, rec_titles, rec_image_paths = self.get_recs_filter(urls, all_filters, 5)
-            # if len(rec_urls) == 10:
             d[self.string_dict(all_filters)] = (rec_urls, rec_titles, rec_image_paths)
         return d
 
