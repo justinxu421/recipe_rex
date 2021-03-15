@@ -221,6 +221,8 @@ def display_results(state):
     if state.buttons:
         for i in range(4):
             state.buttons[i].empty()
+
+    st.markdown(f'During evaluation, you chose **{state.eval_percent_recs_chosen * 100:.0f}%** of these (Please fill out on Google Form).')
     
     # INSERT rec sys 
     url_selections = [x[0] for x in state.selections[state.filter_sel]]
@@ -237,9 +239,6 @@ def display_results(state):
 
     if state.debug:
         st.write({' '.join(a): b for a, b in state.rec_sys.label_counts.items()})
-    
-#     num_chosen_in_eval = int(state.eval_percent_recs_chosen * state.eval_num_recs)
-    st.write(f'During evaluation, you chose {state.eval_percent_recs_chosen * 100:.0f}% of these.')
     
     # also insert user choices 
     st.header('Your Choices')
@@ -281,24 +280,29 @@ def display_evaluation(state):
 
     # important to store to state, so it doesn't change every page refresh
     if not hasattr(state, "eval_recipes_grid"):
+
         # Get the rec'd recipes
         url_selections = [x[0] for x in state.selections[state.filter_sel]]
-        recs_list = []
+        state.recs_list = []
 
         d = state.rec_sys.get_recs_most_common(url_selections)
         if state.filter_sel == 'mains' and d:        
             # KNN within UCB selected meat-starch categories
             for _, (rec_urls, rec_titles, rec_image_paths) in d.items():
-                recs_list.extend(list(zip(rec_urls, rec_titles, rec_image_paths)))
+                state.recs_list.extend(list(zip(rec_urls, rec_titles, rec_image_paths)))
         else:
             # KNN over entire dataset
             rec_urls, rec_titles, rec_image_paths = state.rec_sys.get_recs(url_selections)
-            recs_list.extend(list(zip(rec_urls, rec_titles, rec_image_paths)))
+            state.recs_list.extend(list(zip(rec_urls, rec_titles, rec_image_paths)))
         
-        state.eval_num_recs = len(recs_list)
+        # add to the url set so we don't have repeats surface 
+        for url, _ ,_ in state.recs_list:
+            state.rec_sys.urls.add(url)
+
+        state.eval_num_recs = len(state.recs_list)
         
         # Get the random recipes
-        num_randoms = len(recs_list)
+        num_randoms = len(state.recs_list)
         rand_urls, rand_titles, rand_image_paths, _, _ = state.rec_sys.sample_urls(
             num_samples=num_randoms,
             num_random=num_randoms,
@@ -308,20 +312,17 @@ def display_evaluation(state):
 
         # Shuffle recommendations and randoms, then assign each into a recipe grid
         # Tuple format: [is_rec, url, title, path], is_rec = 0/1 (false, true)
-        recipes_together = np.array([[1, *rec] for rec in recs_list] + [[0, *rand] for rand in state.eval_random_recipes])
-        np.random.shuffle(recipes_together)
+        state.eval_recipes_grid = [(1, *rec) for rec in state.recs_list] + [(0, *rand) for rand in state.eval_random_recipes]
+        random.shuffle(state.eval_recipes_grid)
 
         num_cols = 5 # FIXME hardcoded default num columns
-        num_rows = len(recipes_together) // num_cols
-        size_tuple = len(recipes_together[0])
-        state.eval_recipes_grid = recipes_together.reshape(num_rows, num_cols, size_tuple)
+        num_rows = (len(state.eval_recipes_grid) - 1) // num_cols + 1
+        size_tuple = len(state.eval_recipes_grid[0])
         
         # Create selections grid
-        state.eval_selected_grid = np.zeros((num_rows, num_cols))
-        
+        state.eval_selected_grid = [[0 for _ in range(num_cols)] for _ in range(num_rows)] 
     else:
-        # initialize for the grid
-        num_rows, num_cols, _ = state.eval_recipes_grid.shape
+        num_rows, num_cols = len(state.eval_selected_grid), len(state.eval_selected_grid[0])
     
     state.header.header(f'Evaluate us by choosing your top {state.eval_num_recs} recipes')
     state.error_message.write(state.msg)
@@ -330,43 +331,41 @@ def display_evaluation(state):
     st_grid = [st.beta_columns(num_cols) for _ in range(num_rows)]
     
     if state.debug:
+        st.write(len(state.rec_sys.urls))
+        st.write([x[1] for x in state.eval_random_recipes])
+        st.write([x[1] for x in state.recs_list])
         st.write(state.eval_recipes_grid)
     
     # Display grid of recipes with checkboxes
     for i in range(num_rows):
         for j in range(num_cols):
-            _, _, title, image_path = state.eval_recipes_grid[i,j]
+            if 5*i + j < len(state.eval_recipes_grid):
+                _, _, title, image_path = state.eval_recipes_grid[5*i + j]
             
-            with st_grid[i][j]:
-                st.image([image_path], use_column_width=True)
-                curr_selection = state.eval_selected_grid[i][j] # ensures checkbox stays check if go back then forward to this page
-                state.eval_selected_grid[i][j] = st.checkbox(title, curr_selection)
+                with st_grid[i][j]:
+                    st.image([image_path], use_column_width=True)
+                    curr_selection = state.eval_selected_grid[i][j] # ensures checkbox stays check if go back then forward to this page
+                    state.eval_selected_grid[i][j] = st.checkbox(title, curr_selection)
     
     # Get % recommendations chosen and save in state
-    select_idxs = [[],[]]
+    select_idxs = []
     for i in range(num_rows): 
         for j in range(num_cols):
             if state.eval_selected_grid[i][j]:
-                select_idxs[0].append(i)
-                select_idxs[1].append(j)
+                select_idxs.append(5*i + j)
 
-    selections = state.eval_recipes_grid[select_idxs]
+    selections = [x for idx, x  in enumerate(state.eval_recipes_grid) if idx in select_idxs]
     state.eval_percent_recs_chosen = np.mean([int(is_rec) for is_rec, _, _, _ in selections])
+    # state.eval_percent_recs_chosen = np.mean([int(is_rec) for idx, (is_rec, _, _, _) in enumerate(state.eval_recipes_grid) if idx in select_idxs])
     
     # Save urls chosen in state, for future use e.g. highlighting in the results page
     # or using to refine the results page
     state.eval_selected_urls = [url for _, url, _, _ in selections]
     
     if state.debug:
-        st.write(f"{int(state.eval_percent_recs_chosen * len(selections))} of {len(selections)} choices are recs")
-#         st.write("Shuffled recipes")
-#         st.write(recipes_together)
-#         st.write(state.eval_recipes_grid.shape)
-#         st.write(state.eval_recipes_grid)
+        # st.write(f"{int(state.eval_percent_recs_chosen * len(selections))} of {len(selections)} choices are recs")
         st.write("Selection grid:")
         st.write(state.eval_selected_grid)
-
-    return
 
     
 # render the images
@@ -419,7 +418,7 @@ def render_images(state):
     if state.debug:
         st.write(f"index: {state.index}")
         st.write(f"selection: {state.sel}")
-        st.write(state.rec_sys.urls)
+        st.write(f"number of urls in set: {len(state.rec_sys.urls)}")
 
         st.write(state.rec_sys.get_confidence_bounds('meat'))
         st.write(state.rec_sys.get_confidence_bounds('starch'))

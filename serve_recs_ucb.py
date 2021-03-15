@@ -124,47 +124,46 @@ class UCBRecSys():
             axis = random.choice(self.axes)
             label_df = self.all_labels[axis]
             key = key_dict[axis]
-            print('axis is {}, key is {}'.format(axis, key))
             key_urls = set(label_df[label_df[key] == 1].index) - self.urls
+            print('axis is {}, key is {}'.format(axis, key))
             return random.choice(list(key_urls))
+
+    # sample url by generating key_dict either randomly or through ucb
+    def sample_url(self, is_not_eval, rand = False):
+        key_dict = {}
+        for axis in self.axes:
+            if rand:
+                key = random.choice(self.all_labels[axis].columns)
+            else:
+                key = self.select_axis_arm(axis)
+            key_dict[axis] = key
+
+        url = self.get_random_url(key_dict)
+        if is_not_eval:
+            self.update_counts(url)
+        else:
+            self.urls.add(url)
+
+        return url
 
     # randomly sample some urls and image paths
     def sample_urls(self, num_samples = 4, num_random = 1, is_not_eval = True):
-        keys, urls = [], []
+        urls = []
 
         # select how many random and how many greedy
         num_greedy = num_samples - num_random
 
         # select random keys and then get random url
         for _ in range(num_random):
-            key_dict = {}
-            for axis in self.axes:
-                key = random.choice(self.all_labels[axis].columns)
-                key_dict[axis] = key
-            keys.append(key_dict)
-            url = self.get_random_url(key_dict)
-            if is_not_eval:
-                self.update_counts(url)
-            else:
-                self.urls.add(url)
+            url = self.sample_url(is_not_eval, rand = True)
             urls.append(url)
 
         # select random urls based on meats based on ucb, update with reward 1
         for _ in range(num_greedy):
-            key_dict = {}
-            for axis in self.axes:
-                key = self.select_axis_arm(axis)
-                key_dict[axis] = key
-            keys.append(key_dict)
-            url = self.get_random_url(key_dict)
-            if is_not_eval:
-                self.update_counts(url)
-            else:
-                self.urls.add(url)
+            url = self.sample_url(is_not_eval, rand = False)
             urls.append(url)
 
         # random.shuffle(urls)
-        print(keys)
 
         titles = self.url_index_mapping.loc[urls]['title'].values
         total_time = self.url_index_mapping.loc[urls]['total_time'].values
