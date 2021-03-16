@@ -169,7 +169,7 @@ def display_choices(state):
     for i in range(4):
         with state.cols[i]:
             # state.buttons[i].button('test')
-            st.image([pics[i]], use_column_width=True)
+            st.image([pics[i]], use_column_width=None)
 
             if state.debug:
                 st.write(f"[{titles[i]}]({urls[i]})")
@@ -206,11 +206,11 @@ def write_recs(title, rec_urls, rec_titles, rec_image_paths):
     for i in range(5):
         with row1[i]:
             if i < len(rec_urls):
-                st.image([rec_image_paths[i]], use_column_width=True)
+                st.image([rec_image_paths[i]], use_column_width=None)
                 st.write(f"[{rec_titles[i]}]({rec_urls[i]})")
         with row2[i]:
             if 5+i < len(rec_urls):
-                st.image([rec_image_paths[5+i]], use_column_width=True)
+                st.image([rec_image_paths[5+i]], use_column_width=None)
                 st.write(f"[{rec_titles[5+i]}]({rec_urls[5+i]})")
 
 # result screen image rendering
@@ -251,13 +251,13 @@ def display_results(state):
         for i in range(half):
             url, title, image_path = state.selections[state.filter_sel][i]
             with row3[i]:
-                st.image([image_path], use_column_width=True)
+                st.image([image_path], use_column_width=None)
                 st.write(f"[{title}]({url})")
 
         for i in range(state.num_pages - half):
             url, title, image_path = state.selections[state.filter_sel][5+i]
             with row4[i]:
-                st.image([image_path], use_column_width=True)
+                st.image([image_path], use_column_width=None)
                 st.write(f"[{title}]({url})")
     else:      
         row3 = st.beta_columns(state.num_pages)
@@ -265,7 +265,7 @@ def display_results(state):
         for i in range(state.num_pages):
             url, title, image_path = state.selections[state.filter_sel][i]
             with row3[i]:
-                st.image([image_path], use_column_width=True)
+                st.image([image_path], use_column_width=None)
                 st.write(f"[{title}]({url})")
 
 # Shows evaluation page before results
@@ -472,14 +472,14 @@ def display_bio(total_time, meat_labels, starch_labels, num_ingredients):
 
         <div id="accordion">
           <div class="card">
-            <div class="card-header" id="headingOne">
+            <div class="card-header" id="headingTwo">
               <h5 class="mb-0">
-                <button class="btn btn-link collapsed" data-toggle="collapse" data-target="#collapseOne" aria-expanded="true" aria-controls="collapseOne">
+                <button class="btn btn-link collapsed" data-toggle="collapse" data-target="#collapseTwo" aria-expanded="true" aria-controls="collapseTwo">
                 More Info
                 </button>
               </h5>
             </div>
-            <div id="collapseOne" class="collapse show" aria-labelledby="headingOne" data-parent="#accordion">
+            <div id="collapseTwo" class="collapse show" aria-labelledby="headingTwo" data-parent="#accordion">
               <div class="card-body">
                 <b>{cook_time_emoji}: </b> {total_time} min<br /> 
                 <b> Ingredients: </b> {num_ingredients} <br />
