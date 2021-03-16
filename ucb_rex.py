@@ -479,7 +479,7 @@ def display_bio(total_time, meat_labels, starch_labels, num_ingredients):
                 </button>
               </h5>
             </div>
-            <div id="collapseTwo" class="collapse show" aria-labelledby="headingOne" data-parent="#accordion">
+            <div id="collapseOne" class="collapse show" aria-labelledby="headingOne" data-parent="#accordion">
               <div class="card-body">
                 <b>{cook_time_emoji}: </b> {total_time} min<br /> 
                 <b> Ingredients: </b> {num_ingredients} <br />
