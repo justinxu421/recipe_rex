@@ -224,7 +224,7 @@ def display_results(state):
         for i in range(4):
             state.buttons[i].empty()
 
-    st.markdown(f'During evaluation, you chose **{state.eval_percent_recs_chosen * 100:.0f}%** of these (Please fill out on Google Form).')
+    st.markdown(f'During evaluation, you chose **{state.eval_percent_recs_chosen * 100:.0f}%** of these. Please fill out our [Google Form]("https://tinyurl.com/yzp73vfh").')
     
     # INSERT rec sys 
     url_selections = [x[0] for x in state.selections[state.filter_sel]]
