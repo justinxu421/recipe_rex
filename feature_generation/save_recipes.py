@@ -24,6 +24,13 @@ def process_dataset_list(dfs):
         # make unique index for each recipe
         all_dfs_nutrient = all_dfs_nutrient.drop_duplicates()
         all_dfs_nutrient = all_dfs_nutrient.reset_index().drop(columns = 'index')
+
+        # remove urls with missing images
+        missing_urls = ['https://www.justonecookbook.com/borscht-soup-hong-kong-style/',
+                        'https://www.justonecookbook.com/easy-homemade-granola/',
+                        'https://www.spicetheplate.com/veggie/sauteed-yam-soy-sauce/']
+        all_dfs_nutrient = all_dfs_nutrient[~all_dfs_nutrient.url.isin(missing_urls)]
+
         print(f"number of recipes {len(all_dfs_nutrient)}")
 
         # convert stringified ingredients array to List
@@ -97,13 +104,14 @@ def save_dfs(dfs_nutrient, folder, name):
             dfs_nutrient = transform_features(dfs_nutrient)
             url_index_mapping = dfs_nutrient[['url', 'title', 'index', 'total_time', 'num_ingredients']]
             url_index_mapping['title'] = url_index_mapping['title'].str.capitalize()
+
             print(f'saving to clean_data/{folder}/{name}_url_index_mapping.csv\n')
             url_index_mapping.to_csv(f'../clean_data/{folder}/{name}_url_index_mapping.csv', index = False)
         # if filter, then read from the all_url mapping we just saved
         else:
             all_url_index_mapping = pd.read_csv('../clean_data/all/all_url_index_mapping.csv', index_col = 'url')
-
             url_index_mapping = all_url_index_mapping.loc[dfs_nutrient['url'].values]
+
             print(f'saving to clean_data/{folder}/{name}_url_index_mapping.csv\n')
             url_index_mapping.to_csv(f'../clean_data/{folder}/{name}_url_index_mapping.csv', index = True)
 

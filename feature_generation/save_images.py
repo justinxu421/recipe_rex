@@ -1,7 +1,7 @@
 import urllib.request
 import pandas as pd
 
-all_dfs_nutrient = pd.read_csv('../clean_data/all_recipes_nutrient.csv')
+all_dfs_nutrient = pd.read_csv('../clean_data/all/all_recipes_nutrient.csv')
 
 # create agent that opens from a browser
 opener=urllib.request.build_opener()
