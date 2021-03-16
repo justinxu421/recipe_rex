@@ -166,11 +166,14 @@ def display_choices(state):
 
     meat_labels_dict = {}
     starch_labels_dict = {}
+
+    image_cols = st.beta_columns(4)
+    name_cols = st.beta_columns(4) 
     for i in range(4):
-        with state.cols[i]:
-            # state.buttons[i].button('test')
+        with image_cols[i]:
             st.image([pics[i]], use_column_width=None)
 
+        with name_cols[i]:
             if state.debug:
                 st.write(f"[{titles[i]}]({urls[i]})")
             else:
