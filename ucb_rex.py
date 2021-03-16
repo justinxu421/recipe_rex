@@ -90,9 +90,8 @@ def init_placeholders(state):
     state.progress_bar = st.empty()
     state.error_message = st.empty()
     state.buttons = [] 
-    num_cols = 4
-    state.cols = st.beta_columns(num_cols)
-    for i in range(num_cols):
+    state.cols = st.beta_columns([1,1,1,1])
+    for i in range(4):
         with state.cols[i]:
             state.buttons.append(st.empty())
         
@@ -167,11 +166,11 @@ def display_choices(state):
     meat_labels_dict = {}
     starch_labels_dict = {}
 
-    image_cols = st.beta_columns(4)
-    name_cols = st.beta_columns(4) 
+    image_cols = st.beta_columns([1,1,1,1])
+    name_cols = st.beta_columns([1,1,1,1]) 
     for i in range(4):
         with image_cols[i]:
-            st.image([pics[i]], use_column_width=None)
+            st.image([pics[i]], use_column_width='auto')
 
         with name_cols[i]:
             if state.debug:
@@ -193,7 +192,7 @@ def display_choices(state):
             meat_labels_dict[i] = meat_labels_included
             starch_labels_dict[i] = starch_labels_included
     
-    bio = st.beta_columns(4) 
+    bio = st.beta_columns([1,1,1,1]) 
     for i in range(4):
         with bio[i]:
             display_bio(total_time[i], meat_labels_dict[i], starch_labels_dict[i], num_ingredients[i])
@@ -209,11 +208,11 @@ def write_recs(title, rec_urls, rec_titles, rec_image_paths):
     for i in range(5):
         with row1[i]:
             if i < len(rec_urls):
-                st.image([rec_image_paths[i]], use_column_width=None)
+                st.image([rec_image_paths[i]], use_column_width='auto')
                 st.write(f"[{rec_titles[i]}]({rec_urls[i]})")
         with row2[i]:
             if 5+i < len(rec_urls):
-                st.image([rec_image_paths[5+i]], use_column_width=None)
+                st.image([rec_image_paths[5+i]], use_column_width='auto')
                 st.write(f"[{rec_titles[5+i]}]({rec_urls[5+i]})")
 
 # result screen image rendering
@@ -254,13 +253,13 @@ def display_results(state):
         for i in range(half):
             url, title, image_path = state.selections[state.filter_sel][i]
             with row3[i]:
-                st.image([image_path], use_column_width=None)
+                st.image([image_path], use_column_width='auto')
                 st.write(f"[{title}]({url})")
 
         for i in range(state.num_pages - half):
             url, title, image_path = state.selections[state.filter_sel][5+i]
             with row4[i]:
-                st.image([image_path], use_column_width=None)
+                st.image([image_path], use_column_width='auto')
                 st.write(f"[{title}]({url})")
     else:      
         row3 = st.beta_columns(state.num_pages)
@@ -268,7 +267,7 @@ def display_results(state):
         for i in range(state.num_pages):
             url, title, image_path = state.selections[state.filter_sel][i]
             with row3[i]:
-                st.image([image_path], use_column_width=None)
+                st.image([image_path], use_column_width='auto')
                 st.write(f"[{title}]({url})")
 
 # Shows evaluation page before results
@@ -351,7 +350,7 @@ def display_evaluation(state):
                 _, _, title, image_path = state.eval_recipes_grid[5*i + j]
             
                 with st_grid[i][j]:
-                    st.image([image_path], use_column_width=True)
+                    st.image([image_path], use_column_width='auto')
                     curr_selection = state.eval_selected_grid[i][j] # ensures checkbox stays check if go back then forward to this page
                     state.eval_selected_grid[i][j] = st.checkbox(title, curr_selection)
     
