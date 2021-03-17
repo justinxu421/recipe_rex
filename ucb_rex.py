@@ -224,7 +224,8 @@ def display_results(state):
         for i in range(4):
             state.buttons[i].empty()
 
-    st.markdown(f'During evaluation, you chose **{state.eval_percent_recs_chosen * 100:.0f}%** of these. Please fill out our [Google Form](https://docs.google.com/forms/d/e/1FAIpQLScjDNiF3o8vPC1UpteD1JPooo4DfOuWt2Y2GOFUShdNNs1Fkw/viewform).')
+    if state.validation:
+        st.markdown(f'During evaluation, you chose **{state.eval_percent_recs_chosen * 100:.0f}%** of these. Please fill out our [Google Form](https://docs.google.com/forms/d/e/1FAIpQLScjDNiF3o8vPC1UpteD1JPooo4DfOuWt2Y2GOFUShdNNs1Fkw/viewform).')
     
     # INSERT rec sys 
     url_selections = [x[0] for x in state.selections[state.filter_sel]]
@@ -363,14 +364,12 @@ def display_evaluation(state):
 
     selections = [x for idx, x  in enumerate(state.eval_recipes_grid) if idx in select_idxs]
     state.eval_percent_recs_chosen = np.mean([int(is_rec) for is_rec, _, _, _ in selections])
-    # state.eval_percent_recs_chosen = np.mean([int(is_rec) for idx, (is_rec, _, _, _) in enumerate(state.eval_recipes_grid) if idx in select_idxs])
     
     # Save urls chosen in state, for future use e.g. highlighting in the results page
     # or using to refine the results page
     state.eval_selected_urls = [url for _, url, _, _ in selections]
     
     if state.debug:
-        # st.write(f"{int(state.eval_percent_recs_chosen * len(selections))} of {len(selections)} choices are recs")
         st.write("Selection grid:")
         st.write(state.eval_selected_grid)
 
@@ -384,7 +383,14 @@ def render_images(state):
     if state.index <= state.num_pages-1:
         display_choices(state)
     elif state.index == state.num_pages:
-        display_evaluation(state)
+        if state.validation:
+            display_evaluation(state)
+        else:
+            # skip a page to handle edge cases
+            state.index += 1
+            # set this variable to display
+            state.eval_percent_recs_chosen = 1
+            display_results(state)
     else:
         # FIXME: currently, we have num_pages+1. cannot increment num_pages variable,
         # since a couple other places rely on num_pages for initializing selections made.
@@ -561,6 +567,7 @@ def render():
          rec_sys_dict = rec_sys_dict,
          filter_sel = 'mains',
          debug = False,
+         validation = False,
          all_params = {filter_: {idx: -1 for idx in range(num_pages)} for filter_ in filters},
          num_pages = num_pages,
          # index to indicate page number
@@ -573,6 +580,7 @@ def render():
      )
 
     state.debug = st.sidebar.checkbox('debug', value = False)
+    state.validation = st.sidebar.checkbox('validate', value = True)
     state.filter_index[state.filter_sel] = state.index
     state.filter_sel = st.sidebar.radio('Filter selection', filters)
     state.index = state.filter_index[state.filter_sel]
