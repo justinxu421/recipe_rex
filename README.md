@@ -1,5 +1,9 @@
 # recipe_rex
 
+Project for CS329s: Machine Learning System Design
+
+https://stanford-cs329s.github.io/reports/tender-recipe-recommendations/
+
 ## Download Requirements
 
 Run `pip install -r requirements.txt` to install python dependencies
